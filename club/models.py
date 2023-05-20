@@ -7,11 +7,6 @@ from django.contrib.auth.models import AbstractUser
 
 class CustomUser(AbstractUser):
     role = models.CharField(max_length=50, choices=(("admin", "Админ"),("operator", "Оператор")), blank=True)
-    # def save(self, *args, **kwargs):
-    #     if not self.pk:
-    #         self.role = self.base_role
-    #         self.password = self.password
-    #     return super().save(*args, **kwargs)
     def __str__(self):
         return self.username
 
