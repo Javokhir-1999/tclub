@@ -80,3 +80,11 @@ class AddProductView(APIView):
         barcode = "product_list_id"
         price_buy = data.get('price_buy', None)
         count = data.get('count', None)
+
+class ProductListFindView(ListAPIView):
+    serializer_class = ProductListSerializer
+    def get_queryset(self):
+        data = self.request.data
+        barcode = data.get('barcode', None)
+        print(ProductList.objects.filter(barcode=barcode))
+        return ProductList.objects.filter(barcode=barcode)
