@@ -1,0 +1,6 @@
+Django==4.2.1
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.2.2
+django-phonenumber-field==7.1.0
+django-phonenumbers==1.0.1
+django-rest-framework-nested==0.0.1
