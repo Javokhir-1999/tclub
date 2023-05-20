@@ -15,6 +15,7 @@ SECRET_KEY = 'django-insecure-a5e1h5st#k3$kcyaixga3h^z2xmrtm6!*!=+wk8j561_k(p5l=
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*', 'https://5643-213-230-88-174.ngrok-free.app']
 
 # Application definition
 
@@ -26,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework_simplejwt',
+    'rest_framework',
     'club',
 ]
 
