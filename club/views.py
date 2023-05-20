@@ -75,16 +75,38 @@ class ShipperRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
 class AddProductView(APIView):
     def post(self, request, format=None):
         data = request.data
-        product_list_id = data.get('product_list_id', None)
+        product_id = data.get('product_id', None)
         shipper_id = data.get('shipper_id', None)
-        barcode = "product_list_id"
         price_buy = data.get('price_buy', None)
         count = data.get('count', None)
+
+        if product_id == None or shipper_id == None or price_buy == None or count == None:
+            raise ValidationError(detail={"product_id": "int", "shipper_id": "int", "price_buy": "int", "count": "int"})
+        try:
+            product = ProductList.objects.get(id=product_id)
+            shipper = Shipper.objects.get(id=shipper_id)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
+
+        result = Product.objects.create(
+            product=product,
+            barcode=product.barcode,
+            shipper=shipper,
+            price_buy=price_buy,
+            count=count
+        )
+
+        return Response(ProductSerializer(result, many=False).data)
 
 class ProductListFindView(ListAPIView):
     serializer_class = ProductListSerializer
     def get_queryset(self):
         data = self.request.data
-        barcode = data.get('barcode', None)
-        print(ProductList.objects.filter(barcode=barcode))
-        return ProductList.objects.filter(barcode=barcode)
+        filter = data.get('filter', None)
+        try:
+            return ProductList.objects.filter(barcode=filter)
+        except Exception as ex:
+            try:
+                return ProductList.objects.filter(name__contains=filter)
+            except:
+                raise ValidationError()

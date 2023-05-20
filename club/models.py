@@ -35,7 +35,7 @@ class Shipper(models.Model):
 class Product(models.Model):
     product = models.ForeignKey(ProductList, on_delete=models.PROTECT)
     shipper = models.ForeignKey(Shipper, on_delete=models.PROTECT)
-    barcode = models.PositiveBigIntegerField(null=False, unique=True)
+    barcode = models.PositiveBigIntegerField(null=False, unique=False)
     price_buy = models.PositiveBigIntegerField()
     count = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
