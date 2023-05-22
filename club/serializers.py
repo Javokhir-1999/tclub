@@ -43,6 +43,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+        depth = 2
 
 class ShipperSerializer(serializers.ModelSerializer):
     class Meta:
