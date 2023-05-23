@@ -16,14 +16,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*', 'https://5643-213-230-88-174.ngrok-free.app']
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:8000',
-#     'http://localhost:8001',
-#     'http://*', 'https://*',
-#     'https://2395-213-230-114-224.ngrok-free.app',
-#     'http://2395-213-230-114-224.ngrok-free.app',
-# ]
-# # Application definition
 CORS_ALLOW_ALL_ORIGINS = True
 INSTALLED_APPS = [
     'django.contrib.admin',

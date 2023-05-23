@@ -60,3 +60,13 @@ class BarcodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Barcode
         fields = '__all__'
+
+class TableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Table
+        fields = '__all__'
+
+class DiscountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Discount
+        fields = '__all__'

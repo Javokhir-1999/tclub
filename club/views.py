@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from .models import (ProductType, ProductList, Shipper, 
     Product, Client, CustomUser, Table, ProductSell, 
     ProductSellCheck, Store, Discount, Order, OrderCheck, Barcode)
-from .serializers import (CustomUserTokenSerializer,BarcodeSerializer, ProductSerializer,ProductTypeSerializer,ProductListSerializer,ShipperSerializer, StoreSerializer)
+from .serializers import (CustomUserTokenSerializer, TableSerializer, DiscountSerializer, BarcodeSerializer, ProductSerializer,ProductTypeSerializer,ProductListSerializer,ShipperSerializer, StoreSerializer)
 
 class LoginView(APIView):
     permission_classes = []
@@ -41,10 +41,14 @@ class ProductStoreListAPIView(ListAPIView):
 class ProductTypeRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
     queryset = ProductType.objects.all()
     serializer_class = ProductTypeSerializer
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        data = self.perform_destroy(instance)
-        return Response('Deleted Successfully', status=201)
+        try:
+            data = self.perform_destroy(instance)
+            return Response('Deleted Successfully', status=201)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
 
 class ProductListCreateAPIView(ListCreateAPIView):
     queryset = ProductList.objects.all()
@@ -61,8 +65,11 @@ class ProductRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
     serializer_class = ProductListSerializer
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        data = self.perform_destroy(instance)
-        return Response('Deleted Successfully', status=201)
+        try:
+            data = self.perform_destroy(instance)
+            return Response('Deleted Successfully', status=201)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
 
 class ShipperListCreateAPIView(ListCreateAPIView):
     queryset = Shipper.objects.all()
@@ -73,8 +80,17 @@ class ShipperRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
     serializer_class = ShipperSerializer
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        data = self.perform_destroy(instance)
-        return Response('Deleted Successfully', status=201)
+        try:
+            data = self.perform_destroy(instance)
+            return Response('Deleted Successfully', status=201)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
+
+class ShipperUpdateAPIView(UpdateAPIView):
+    queryset = Shipper.objects.all()
+    serializer_class = ShipperSerializer
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
 
 class AddProductView(APIView):
     def post(self, request, format=None):
@@ -128,7 +144,6 @@ class ProductListFindView(ListAPIView):
                 raise ValidationError()
 
 class GenBarcodeView(APIView):
-    # serializer_class = BarcodeSerializer
     def get(self, request):
         try:
             barcode = Barcode.objects.create()
@@ -137,3 +152,45 @@ class GenBarcodeView(APIView):
             raise ValidationError(detail=ex)
 
         return Response({"barcode":barcode})
+
+class TableListCreateAPIView(ListCreateAPIView):
+    queryset = Table.objects.all()
+    serializer_class = TableSerializer
+
+class TableUpdateAPIView(UpdateAPIView):
+    queryset = Table.objects.all()
+    serializer_class = TableSerializer
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+class TableRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
+    queryset = Table.objects.all()
+    serializer_class = TableSerializer
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            data = self.perform_destroy(instance)
+            return Response('Deleted Successfully', status=201)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
+
+class DiscountListCreateAPIView(ListCreateAPIView):
+    queryset = Discount.objects.all()
+    serializer_class = DiscountSerializer
+
+class DiscounUpdateAPIView(UpdateAPIView):
+    queryset = Discount.objects.all()
+    serializer_class = DiscountSerializer
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+class DiscountRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
+    queryset = Discount.objects.all()
+    serializer_class = DiscountSerializer
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            data = self.perform_destroy(instance)
+            return Response('Deleted Successfully', status=201)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
