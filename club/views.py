@@ -38,6 +38,18 @@ class ProductStoreListAPIView(ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
+class ProductStoreRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            data = self.perform_destroy(instance)
+            return Response('Deleted Successfully', status=201)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
+
 class ProductTypeRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
     queryset = ProductType.objects.all()
     serializer_class = ProductTypeSerializer

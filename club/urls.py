@@ -6,6 +6,7 @@ urlpatterns = [
     path('product-type', views.ProductTypeListCreateView.as_view()),
     path('product-store', views.ProductStoreListAPIView.as_view()),
     path('product-store-add', views.AddProductView.as_view()),
+    path('product-store/<int:pk>', views.ProductStoreRetrieveDestroyView.as_view()),
     path('product-type/<int:pk>', views.ProductTypeRetrieveDestroyView.as_view()),
     
     path('product-list', views.ProductListCreateAPIView.as_view()),
