@@ -10,8 +10,8 @@ from django.contrib.auth.models import User
 
 from .models import (ProductType, ProductList, Shipper, 
     Product, Client, CustomUser, Table, ProductSell, 
-    ProductSellCheck, Store, Discount, Order, OrderCheck)
-from .serializers import (CustomUserTokenSerializer,ProductSerializer,ProductTypeSerializer,ProductListSerializer,ShipperSerializer)
+    ProductSellCheck, Store, Discount, Order, OrderCheck, Barcode)
+from .serializers import (CustomUserTokenSerializer,BarcodeSerializer, ProductSerializer,ProductTypeSerializer,ProductListSerializer,ShipperSerializer, StoreSerializer)
 
 class LoginView(APIView):
     permission_classes = []
@@ -92,7 +92,7 @@ class AddProductView(APIView):
         except Exception as ex:
             raise ValidationError(detail=ex)
 
-        result = Product.objects.create(
+        product_add = Product.objects.create(
             product=product,
             barcode=product.barcode,
             shipper=shipper,
@@ -100,13 +100,25 @@ class AddProductView(APIView):
             count=count
         )
 
-        return Response(ProductSerializer(result, many=False).data)
+        try:
+            in_store = Store.objects.get(barcode=product_add.barcode)
+            in_store.total_left += product_add.count
+            in_store.save() 
+            # Because the super class save method doesn't return anything
+            stored_product = Store.objects.get(barcode=product_add.barcode)
+        except Exception as ex:
+            stored_product = Store.objects.create(
+                barcode=product_add.barcode,
+                total_left=product_add.count)
+
+        return Response({"product": ProductSerializer(product_add, many=False).data, "total_left": stored_product.total_left})
 
 class ProductListFindView(ListAPIView):
     serializer_class = ProductListSerializer
     def get_queryset(self):
         data = self.request.data
-        filter = data.get('filter', None)
+        # filter = data.get('filter', None)
+        filter = self.request.GET.get('filter', None)
         try:
             return ProductList.objects.filter(barcode=filter)
         except Exception as ex:
@@ -114,3 +126,14 @@ class ProductListFindView(ListAPIView):
                 return ProductList.objects.filter(name__contains=filter)
             except:
                 raise ValidationError()
+
+class GenBarcodeView(APIView):
+    # serializer_class = BarcodeSerializer
+    def get(self, request):
+        try:
+            barcode = Barcode.objects.create()
+            barcode = int(str(barcode.id).ljust(11,'0'))
+        except Exception as ex:
+            raise ValidationError(detail=ex)
+
+        return Response({"barcode":barcode})

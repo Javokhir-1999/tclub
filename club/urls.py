@@ -4,8 +4,8 @@ from . import views
 urlpatterns = [
     path('login', views.LoginView.as_view()),
     path('product-type', views.ProductTypeListCreateView.as_view()),
-    path('product-add', views.AddProductView.as_view()),
     path('product-store', views.ProductStoreListAPIView.as_view()),
+    path('product-store-add', views.AddProductView.as_view()),
     path('product-type/<int:pk>', views.ProductTypeRetrieveDestroyView.as_view()),
     path('product-list-update/<int:pk>', views.ProductListUpdateAPIView.as_view()),
 
@@ -15,4 +15,5 @@ urlpatterns = [
 
     path('shipper', views.ShipperListCreateAPIView.as_view()),
     path('shipper/<int:pk>', views.ShipperRetrieveDestroyView.as_view()),
+    path('generate-barcode', views.GenBarcodeView.as_view()),
 ]

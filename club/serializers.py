@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (ProductType, ProductList, Shipper, 
     Product, Client, CustomUser, Table, ProductSell, 
-    ProductSellCheck, Store, Discount, Order, OrderCheck)
+    ProductSellCheck, Store, Discount, Order, OrderCheck, Barcode)
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class CustomUserTokenSerializer(serializers.ModelSerializer):
@@ -38,7 +38,8 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductList
         fields = '__all__'
-
+        depth = 2
+        
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
@@ -48,4 +49,14 @@ class ProductSerializer(serializers.ModelSerializer):
 class ShipperSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shipper
+        fields = '__all__'
+
+class StoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Store
+        fields = '__all__'
+    
+class BarcodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Barcode
         fields = '__all__'

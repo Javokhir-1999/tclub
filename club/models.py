@@ -87,12 +87,11 @@ class ProductSellCheck(models.Model):
         return self.order_uuid
 
 class Store(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.PROTECT)
     barcode = models.PositiveBigIntegerField(null=False, unique=True)
     total_left = models.PositiveBigIntegerField()
     updated_at = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return self.product.product.name+"|"+str(self.barcode)
+        return str(self.barcode)
 
 class Discount(models.Model):
     title = models.CharField(max_length=255, unique=True)
@@ -134,3 +133,9 @@ class OrderCheck(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     def __str__(self):
         return self.order_uuid
+
+class Barcode(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return self.id

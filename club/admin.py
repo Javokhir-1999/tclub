@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group as DjGroup
 
 from .models import (ProductType, ProductList, Shipper, 
     Product, Client, CustomUser, Table, ProductSell, 
-    ProductSellCheck, Store, Discount, Order, OrderCheck)
+    ProductSellCheck, Store, Discount, Order, OrderCheck, Barcode)
 
 admin.site.unregister(DjGroup)
 # admin.site.unregister(DjUser)
@@ -27,7 +27,7 @@ class ProductSellAdmin(admin.ModelAdmin):
 class ProductSellCheckAdmin(admin.ModelAdmin):
     list_display = ('id', 'product_sell', 'operator', 'client', 'total_price', 'created_at', 'updated_at')
 class StoreAdmin(admin.ModelAdmin):
-    list_display = ('product', 'barcode', 'total_left', 'updated_at')
+    list_display = ('barcode', 'total_left', 'updated_at')
 class DiscountAdmin(admin.ModelAdmin):
     list_display = ('title', 'minute', 'percent', 'created_at', 'updated_at')
 class OrderAdmin(admin.ModelAdmin):
@@ -36,6 +36,8 @@ class OrderAdmin(admin.ModelAdmin):
 class OrderCheckAdmin(admin.ModelAdmin):
     list_display = ('order_uuid', 'client', 'operator', 'time_open', 'time_close', 'played_minute', 'table_minute_price', 'discount_percent', 'total_price', 'created_at', 'updated_at')
 
+class BarcodeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'created_at', 'updated_at')
 
 admin.site.register(ProductType, ProductTypeAdmin)
 admin.site.register(ProductList, ProductListAdmin)
@@ -50,3 +52,4 @@ admin.site.register(Store, StoreAdmin)
 admin.site.register(Discount, DiscountAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderCheck, OrderCheckAdmin)
+admin.site.register(Barcode, BarcodeAdmin)
