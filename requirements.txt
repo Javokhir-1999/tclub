@@ -1,6 +1,8 @@
 Django==4.2.1
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.2
+Pillow==9.5.0
 django-phonenumber-field==7.1.0
 django-phonenumbers==1.0.1
 python-barcode==0.14.0
+django-cors-headers==4.0.0
