@@ -40,11 +40,21 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = '__all__'
         depth = 2
         
+class ProductListCSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductList
+        fields = '__all__'
+
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
         depth = 2
+
+class ProductCSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
 
 class ShipperSerializer(serializers.ModelSerializer):
     class Meta:

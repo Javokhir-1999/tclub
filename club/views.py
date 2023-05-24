@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from .models import (ProductType, ProductList, Shipper, 
     Product, Client, CustomUser, Table, ProductSell, 
     ProductSellCheck, Store, Discount, Order, OrderCheck, Barcode)
-from .serializers import (CustomUserTokenSerializer, TableSerializer, DiscountSerializer, BarcodeSerializer, ProductSerializer,ProductTypeSerializer,ProductListSerializer,ShipperSerializer, StoreSerializer)
+from .serializers import (CustomUserTokenSerializer, ProductListCSerializer, TableSerializer, DiscountSerializer, BarcodeSerializer, ProductSerializer,ProductTypeSerializer,ProductListSerializer,ShipperSerializer, StoreSerializer)
 
 class LoginView(APIView):
     permission_classes = []
@@ -64,7 +64,12 @@ class ProductTypeRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
 
 class ProductListCreateAPIView(ListCreateAPIView):
     queryset = ProductList.objects.all()
-    serializer_class = ProductListSerializer
+    serializer_class = ProductListCSerializer
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = ProductListSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 class ProductListUpdateAPIView(UpdateAPIView):
     queryset = ProductList.objects.all()
