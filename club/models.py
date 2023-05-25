@@ -2,11 +2,15 @@ from django.db import models
 from uuid import uuid4
 from phonenumber_field.modelfields import PhoneNumberField
 from core.settings import MEDIA_URL
-
 from django.contrib.auth.models import AbstractUser
+from core.settings import MEDIA_URL
 
 class CustomUser(AbstractUser):
-    role = models.CharField(max_length=50, choices=(("admin", "Админ"),("operator", "Оператор")), blank=True)
+    role = models.CharField(
+        max_length=50, 
+        choices=(("admin", "Админ"),("operator", "Оператор")), 
+        blank=False,
+        null=False)
     def __str__(self):
         return self.username
 

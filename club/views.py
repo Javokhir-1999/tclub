@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from .models import (ProductType, ProductList, Shipper, 
     Product, Client, CustomUser, Table, ProductSell, 
     ProductSellCheck, Store, Discount, Order, OrderCheck, Barcode)
-from .serializers import (CustomUserTokenSerializer, ProductListCSerializer, TableSerializer, DiscountSerializer, BarcodeSerializer, ProductSerializer,ProductTypeSerializer,ProductListSerializer,ShipperSerializer, StoreSerializer)
+from .serializers import (CustomUserSerializer,CustomUserTokenSerializer, ProductListCSerializer, TableSerializer, DiscountSerializer, BarcodeSerializer, ProductSerializer,ProductTypeSerializer,ProductListSerializer,ShipperSerializer, StoreSerializer)
 
 class LoginView(APIView):
     permission_classes = []
@@ -29,6 +29,28 @@ class LoginView(APIView):
                 raise ValidationError(detail={'detail':'user status is not active'})
         else:
             raise ValidationError(detail={'detail':'login or password is wrong'})
+
+class CustomUserListCreateView(ListCreateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        instance.set_password(instance.password)
+        instance.save()
+
+class CustomUserUpdateAPIView(UpdateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        instance.set_password(instance.password)
+        instance.save()
+
+class CustomUserRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
 
 class ProductTypeListCreateView(ListCreateAPIView):
     queryset = ProductType.objects.all()

@@ -29,6 +29,11 @@ class CustomUsersTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['email'] = user.email
         return token
 
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = '__all__'
+
 class ProductTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductType

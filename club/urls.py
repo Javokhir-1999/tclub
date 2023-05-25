@@ -3,6 +3,9 @@ from . import views
 
 urlpatterns = [
     path('login', views.LoginView.as_view()),
+    path('user', views.CustomUserListCreateView.as_view()),
+    path('user/<int:pk>', views.CustomUserRetrieveDestroyView.as_view()),
+    path('user-update/<int:pk>', views.CustomUserUpdateAPIView.as_view()),
     path('product-type', views.ProductTypeListCreateView.as_view()),
     path('product-store', views.ProductStoreListAPIView.as_view()),
     path('product-store-add', views.AddProductView.as_view()),
