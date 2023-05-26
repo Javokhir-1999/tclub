@@ -9,9 +9,9 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 
 from .models import (ProductType, ProductList, Shipper, 
-    Product, Client, CustomUser, Table, ProductSell, 
-    ProductSellCheck, Store, Discount, Order, OrderCheck, Barcode)
-from .serializers import (CustomUserSerializer,CustomUserTokenSerializer, ProductListCSerializer, TableSerializer, DiscountSerializer, BarcodeSerializer, ProductSerializer,ProductTypeSerializer,ProductListSerializer,ShipperSerializer, StoreSerializer)
+    Store, Payment, Client, CustomUser, Table, ProductSell, 
+    ProductSellCheck, StoreAll, Discount, Order, OrderCheck, Barcode)
+from .serializers import (CustomUserSerializer,CustomUserTokenSerializer, ProductListCSerializer, TableSerializer, DiscountSerializer, BarcodeSerializer, StoreSerializer, StoreCSerializer, ProductTypeSerializer,ProductListSerializer,ShipperSerializer, StoreAllSerializer)
 
 class LoginView(APIView):
     permission_classes = []
@@ -57,12 +57,12 @@ class ProductTypeListCreateView(ListCreateAPIView):
     serializer_class = ProductTypeSerializer
 
 class ProductStoreListAPIView(ListAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+    queryset = Store.objects.all()
+    serializer_class = StoreSerializer
 
-class ProductStoreRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+class ProductStoreAllRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
+    queryset = Store.objects.all()
+    serializer_class = StoreSerializer
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -131,13 +131,15 @@ class ShipperUpdateAPIView(UpdateAPIView):
     def put(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
 
-class AddProductView(APIView):
+class AddToStoreAPIView(APIView):
     def post(self, request, format=None):
         data = request.data
         product_id = data.get('product_id', None)
         shipper_id = data.get('shipper_id', None)
         price_buy = data.get('price_buy', None)
         count = data.get('count', None)
+        payment = data.get('payment', None)
+
 
         if product_id == None or shipper_id == None or price_buy == None or count == None:
             raise ValidationError(detail={"product_id": "int", "shipper_id": "int", "price_buy": "int", "count": "int"})
@@ -147,26 +149,35 @@ class AddProductView(APIView):
         except Exception as ex:
             raise ValidationError(detail=ex)
 
-        product_add = Product.objects.create(
-            product=product,
-            barcode=product.barcode,
-            shipper=shipper,
-            price_buy=price_buy,
-            count=count
-        )
+        try:
+            product_add = Store.objects.create(
+                product=product,
+                barcode=product.barcode,
+                shipper=shipper,
+                price_buy=price_buy,
+                count=count
+            )
+            if payment:
+                Payment.objects.create(
+                    shipment=product_add,
+                    amount=payment 
+                )
+        except Exception as ex:
+            raise ValidationError(ex)
+
 
         try:
-            in_store = Store.objects.get(barcode=product_add.barcode)
+            in_store = StoreAll.objects.get(barcode=product_add.barcode)
             in_store.total_left += product_add.count
             in_store.save() 
             # Because the super class save method doesn't return anything
-            stored_product = Store.objects.get(barcode=product_add.barcode)
+            stored_product = StoreAll.objects.get(barcode=product_add.barcode)
         except Exception as ex:
-            stored_product = Store.objects.create(
+            stored_product = StoreAll.objects.create(
                 barcode=product_add.barcode,
                 total_left=product_add.count)
 
-        return Response({"product": ProductSerializer(product_add, many=False).data, "total_left": stored_product.total_left})
+        return Response({"product": StoreCSerializer(product_add, many=False).data, "total_left": stored_product.total_left})
 
 class ProductListFindView(ListAPIView):
     serializer_class = ProductListSerializer
@@ -233,3 +244,18 @@ class DiscountRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
             return Response('Deleted Successfully', status=201)
         except Exception as ex:
             raise ValidationError(detail=ex)
+
+class ProductStatisticsView(APIView):
+    def get(self, request, format=None):
+        product_ids = ProductList.objects.all().values_list("id", flat=True)
+        products = []
+        for id in product_ids:
+            product = ProductList.objects.get(id=id)
+            store = StoreAll.objects.get(barcode=product.barcode)
+
+            products.append({
+                "product": ProductListSerializer(product, many=False).data,
+                "total_left": store.total_left,
+            })
+
+        return Response({})

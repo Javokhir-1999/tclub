@@ -36,7 +36,7 @@ class Shipper(models.Model):
     def __str__(self):
         return self.name
 
-class Product(models.Model):
+class Store(models.Model):
     product = models.ForeignKey(ProductList, on_delete=models.PROTECT)
     shipper = models.ForeignKey(Shipper, on_delete=models.PROTECT)
     barcode = models.PositiveBigIntegerField(null=False, unique=False)
@@ -46,6 +46,13 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     def __str__(self):
         return self.product.name  
+
+class Payment(models.Model):
+    shipment = models.ForeignKey(Store, on_delete=models.CASCADE)
+    amount = models.PositiveBigIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return str(self.id)
 
 class Client(models.Model):
     name = models.CharField(max_length=128, unique=True)
@@ -72,13 +79,13 @@ class ProductSell(models.Model):
     client = models.ForeignKey(Client, on_delete=models.PROTECT, null=True, blank=True)
     table = models.ForeignKey(Table, on_delete=models.PROTECT, null=True, blank=True)
     barcode = models.PositiveBigIntegerField(null=False, unique=True)
-    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    product = models.ForeignKey(Store, on_delete=models.PROTECT)
     operator = models.ForeignKey(CustomUser, on_delete=models.PROTECT)
     price_sell = models.PositiveBigIntegerField(null=False, help_text='price for one')
     count = models.PositiveBigIntegerField()
     sold_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return self.product.name
+        return self.product.product.name
 
 class ProductSellCheck(models.Model):
     product_sell = models.TextField(help_text="contains a list of sold products")
@@ -90,7 +97,7 @@ class ProductSellCheck(models.Model):
     def __str__(self):
         return self.order_uuid
 
-class Store(models.Model):
+class StoreAll(models.Model):
     barcode = models.PositiveBigIntegerField(null=False, unique=True)
     total_left = models.PositiveBigIntegerField()
     updated_at = models.DateTimeField(auto_now=True)

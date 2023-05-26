@@ -1,7 +1,8 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from .models import (ProductType, ProductList, Shipper, 
-    Product, Client, CustomUser, Table, ProductSell, 
-    ProductSellCheck, Store, Discount, Order, OrderCheck, Barcode)
+    Store, Client, CustomUser, Table, ProductSell, Payment, 
+    ProductSellCheck, StoreAll, Discount, Order, OrderCheck, Barcode)
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class CustomUserTokenSerializer(serializers.ModelSerializer):
@@ -50,15 +51,53 @@ class ProductListCSerializer(serializers.ModelSerializer):
         model = ProductList
         fields = '__all__'
 
-class ProductSerializer(serializers.ModelSerializer):
+class StoreAllSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Product
+        model = StoreAll
         fields = '__all__'
-        depth = 2
 
-class ProductCSerializer(serializers.ModelSerializer):
+class StoreAllSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Product
+        model = StoreAll
+        fields = '__all__'
+
+class StoreSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(label='ID')
+    payment = serializers.SerializerMethodField('get_payment')
+    sales = serializers.SerializerMethodField('get_sales')
+    class Meta:
+        model = Store
+        fields = '__all__'
+        extra = 'payment'
+        depth = 2
+    def get_payment(self, obj):
+        total_pay = 0
+        try:
+            payment_list = Payment.objects.filter(shipment=obj.id).values_list('amount')
+            for amount in payment_list:
+                total_pay += amount[0]
+            return total_pay
+        except Exception as ex:
+            raise ValidationError(ex)
+
+    def get_sales(self, obj):
+        total_sell_count = 0
+        total_sell_price = 0
+        try:
+            sales = ProductSell.objects.filter(barcode=obj.barcode)
+            for sale in sales:
+                total_sell_count += sale.count
+                total_sell_price += sale.count*sale.price_sell
+            return {
+                "total_sell_count": total_sell_count,
+                "total_sell_price": total_sell_price,
+            }
+        except Exception as ex:
+            raise ValidationError(ex)
+            
+class StoreCSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Store
         fields = '__all__'
 
 class ShipperSerializer(serializers.ModelSerializer):
@@ -66,11 +105,6 @@ class ShipperSerializer(serializers.ModelSerializer):
         model = Shipper
         fields = '__all__'
 
-class StoreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Store
-        fields = '__all__'
-    
 class BarcodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Barcode
