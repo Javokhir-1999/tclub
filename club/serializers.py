@@ -33,7 +33,12 @@ class CustomUsersTokenObtainPairSerializer(TokenObtainPairSerializer):
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = '__all__'
+        fields = [
+            'id',
+            'username',
+            'first_name',
+            'role',
+        ]
 
 class ProductTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,10 +46,40 @@ class ProductTypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductListSerializer(serializers.ModelSerializer):
+    shipment = serializers.SerializerMethodField('get_shipment')
+    sales = serializers.SerializerMethodField('get_sales')
     class Meta:
         model = ProductList
         fields = '__all__'
+        extra = ['sales', 'shipment']
         depth = 2
+    def get_shipment(self, obj):
+        total_price_buy=0
+        try:
+            shipments = Store.objects.filter(barcode=obj.barcode)
+            for shipment in shipments:
+                total_price_buy += shipment.price_buy*shipment.count
+            return {
+                "history": StoreSerializer(shipments, many=True).data,
+                "total_price_buy": total_price_buy
+            }
+        except Exception as ex:
+            raise ValidationError(ex)
+
+    def get_sales(self, obj):
+        total_sell_count = 0
+        total_sell_price = 0
+        try:
+            sales = ProductSell.objects.filter(barcode=obj.barcode)
+            for sale in sales:
+                total_sell_count += sale.count
+                total_sell_price += sale.count*sale.price_sell
+            return {
+                "total_sell_count": total_sell_count,
+                "total_sell_price": total_sell_price,
+            }
+        except Exception as ex:
+            raise ValidationError(ex)
         
 class ProductListCSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,13 +98,17 @@ class StoreAllSerializer(serializers.ModelSerializer):
 
 class StoreSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(label='ID')
+    total_price = serializers.SerializerMethodField('get_total_price')
     payment = serializers.SerializerMethodField('get_payment')
-    sales = serializers.SerializerMethodField('get_sales')
     class Meta:
         model = Store
         fields = '__all__'
-        extra = 'payment'
+        extra = ['payment', 'total_price']
         depth = 2
+
+    def get_total_price(self, obj):
+        return obj.count * obj.price_buy
+
     def get_payment(self, obj):
         total_pay = 0
         try:
@@ -79,21 +118,9 @@ class StoreSerializer(serializers.ModelSerializer):
             return total_pay
         except Exception as ex:
             raise ValidationError(ex)
+    
 
-    def get_sales(self, obj):
-        total_sell_count = 0
-        total_sell_price = 0
-        try:
-            sales = ProductSell.objects.filter(barcode=obj.barcode)
-            for sale in sales:
-                total_sell_count += sale.count
-                total_sell_price += sale.count*sale.price_sell
-            return {
-                "total_sell_count": total_sell_count,
-                "total_sell_price": total_sell_price,
-            }
-        except Exception as ex:
-            raise ValidationError(ex)
+    
             
 class StoreCSerializer(serializers.ModelSerializer):
     class Meta:
@@ -119,3 +146,36 @@ class DiscountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Discount
         fields = '__all__'
+
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = '__all__'
+
+class ProductSellSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductSell
+        fields = '__all__'
+        depth=2
+
+class ProductSellCUSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductSell
+        fields = '__all__'
+    
+    def create(self, validated_data):
+        try:
+            in_store = StoreAll.objects.get(barcode=validated_data.barcode)
+            in_store.total_left -= validated_data.count
+            in_store.save()
+        except Exception as ex:
+            stored_product = StoreAll.objects.create(
+                barcode=product_add.barcode,
+                total_left=product_add.count)
+
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
+
+    

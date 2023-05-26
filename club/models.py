@@ -78,14 +78,18 @@ class Table(models.Model):
 class ProductSell(models.Model):
     client = models.ForeignKey(Client, on_delete=models.PROTECT, null=True, blank=True)
     table = models.ForeignKey(Table, on_delete=models.PROTECT, null=True, blank=True)
-    barcode = models.PositiveBigIntegerField(null=False, unique=True)
-    product = models.ForeignKey(Store, on_delete=models.PROTECT)
+    barcode = models.PositiveBigIntegerField(null=False, unique=False)
+    product = models.ForeignKey(ProductList, on_delete=models.PROTECT)
     operator = models.ForeignKey(CustomUser, on_delete=models.PROTECT)
+    status = models.BooleanField(
+        default=True, 
+        help_text="True = Open (not payed)", 
+        choices=((True, "Open - no payed"), (False, "Closed - payed")))
     price_sell = models.PositiveBigIntegerField(null=False, help_text='price for one')
     count = models.PositiveBigIntegerField()
     sold_time = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return self.product.product.name
+        return self.product.name
 
 class ProductSellCheck(models.Model):
     product_sell = models.TextField(help_text="contains a list of sold products")

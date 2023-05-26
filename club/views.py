@@ -7,11 +7,27 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 from .models import (ProductType, ProductList, Shipper, 
     Store, Payment, Client, CustomUser, Table, ProductSell, 
     ProductSellCheck, StoreAll, Discount, Order, OrderCheck, Barcode)
-from .serializers import (CustomUserSerializer,CustomUserTokenSerializer, ProductListCSerializer, TableSerializer, DiscountSerializer, BarcodeSerializer, StoreSerializer, StoreCSerializer, ProductTypeSerializer,ProductListSerializer,ShipperSerializer, StoreAllSerializer)
+from .serializers import (
+    ProductSellSerializer,
+    ProductSellCUSerializer,
+    ClientSerializer,
+    CustomUserSerializer,
+    CustomUserTokenSerializer,
+    ProductListCSerializer,
+    TableSerializer,
+    DiscountSerializer,
+    BarcodeSerializer,
+    StoreSerializer,
+    StoreCSerializer,
+    ProductTypeSerializer,
+    ProductListSerializer,
+    ShipperSerializer,
+    StoreAllSerializer)
 
 class LoginView(APIView):
     permission_classes = []
@@ -142,7 +158,7 @@ class AddToStoreAPIView(APIView):
 
 
         if product_id == None or shipper_id == None or price_buy == None or count == None:
-            raise ValidationError(detail={"product_id": "int", "shipper_id": "int", "price_buy": "int", "count": "int"})
+            raise ValidationError(detail={"product_id": "required", "shipper_id": "required", "price_buy": "required", "count": "required"})
         try:
             product = ProductList.objects.get(id=product_id)
             shipper = Shipper.objects.get(id=shipper_id)
@@ -245,17 +261,102 @@ class DiscountRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
         except Exception as ex:
             raise ValidationError(detail=ex)
 
-class ProductStatisticsView(APIView):
-    def get(self, request, format=None):
-        product_ids = ProductList.objects.all().values_list("id", flat=True)
-        products = []
-        for id in product_ids:
-            product = ProductList.objects.get(id=id)
-            store = StoreAll.objects.get(barcode=product.barcode)
+class ClientListCreateAPIView(ListCreateAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
 
-            products.append({
-                "product": ProductListSerializer(product, many=False).data,
-                "total_left": store.total_left,
+class ClientUpdateAPIView(UpdateAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+class ClientRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            data = self.perform_destroy(instance)
+            return Response('Deleted Successfully', status=201)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
+
+class ProductSellListCreateAPIView(ListCreateAPIView):
+    queryset = ProductSell.objects.all()
+    serializer_class = ProductSellCUSerializer
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = ProductSellSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        client_id = data.get('client_id', None)
+        table_id = data.get('table_id', None)
+        operator_id = data.get('operator_id', None)
+        product_barcode = data.get('product_barcode', None)
+        count = int(data.get('count', None))
+        price_sell = int(data.get('price_sell', None))
+
+        if operator_id == None or product_barcode == None or count == None or price_sell == None:
+            raise ValidationError(detail={
+                "operator_id": "required", 
+                "product_barcode": "required", 
+                "count": "required", 
+                "price_sell": "required",
+                "table_id": "not required",
+                "client_id": "not required",
             })
 
-        return Response({})
+        try:
+            product = ProductList.objects.get(barcode=product_barcode)
+            store_all = StoreAll.objects.get(barcode=product_barcode)
+            operator = CustomUser.objects.get(id=operator_id)
+            if client_id:
+                client = Client.objects.get(id=int(client_id))
+            else:
+                client = None
+            if table_id:
+                table = Table.objects.get(id=int(table_id))
+            else:
+                table = None
+        except Exception as ex:
+            raise ValidationError(ex)
+        
+        if store_all.total_left >= count:
+            product_sell = ProductSell.objects.create(
+                product = product,
+                barcode = product.barcode,
+                count = count,
+                client = client,
+                table = table,
+                operator = operator,
+                price_sell = price_sell,
+            )
+            store_all.total_left -= count
+            store_all.save()
+            return Response({
+                "product_sell":ProductSellSerializer(product_sell).data,
+                "total_left":StoreAllSerializer(store_all).data['total_left'],
+            })
+        else:
+            raise ValidationError(detail="In Store only "+str(store_all.total_left)+" left. "+"but you required "+str(count))
+     
+
+class ProductSellUpdateAPIView(UpdateAPIView):
+    queryset = ProductSell.objects.all()
+    serializer_class = ProductSellSerializer
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+class ProductSellRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
+    queryset = ProductSell.objects.all()
+    serializer_class = ProductSellSerializer
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            data = self.perform_destroy(instance)
+            return Response('Deleted Successfully', status=201)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
