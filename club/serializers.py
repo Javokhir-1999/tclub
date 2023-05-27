@@ -81,7 +81,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         except Exception as ex:
             raise ValidationError(ex)
         
-class ProductListCSerializer(serializers.ModelSerializer):
+class ProductListCUSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductList
         fields = '__all__'
@@ -118,9 +118,7 @@ class StoreSerializer(serializers.ModelSerializer):
             return total_pay
         except Exception as ex:
             raise ValidationError(ex)
-    
 
-    
             
 class StoreCSerializer(serializers.ModelSerializer):
     class Meta:

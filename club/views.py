@@ -18,7 +18,7 @@ from .serializers import (
     ClientSerializer,
     CustomUserSerializer,
     CustomUserTokenSerializer,
-    ProductListCSerializer,
+    ProductListCUSerializer,
     TableSerializer,
     DiscountSerializer,
     BarcodeSerializer,
@@ -100,9 +100,15 @@ class ProductTypeRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
         except Exception as ex:
             raise ValidationError(detail=ex)
 
+class ProductTypeUpdateAPIView(UpdateAPIView):
+    queryset = ProductType.objects.all()
+    serializer_class = ProductTypeSerializer
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
 class ProductListCreateAPIView(ListCreateAPIView):
     queryset = ProductList.objects.all()
-    serializer_class = ProductListCSerializer
+    serializer_class = ProductListCUSerializer
 
     def list(self, request):
         queryset = self.get_queryset()
@@ -111,7 +117,7 @@ class ProductListCreateAPIView(ListCreateAPIView):
 
 class ProductListUpdateAPIView(UpdateAPIView):
     queryset = ProductList.objects.all()
-    serializer_class = ProductListSerializer
+    serializer_class = ProductListCUSerializer
     def put(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
 
@@ -157,8 +163,14 @@ class AddToStoreAPIView(APIView):
         payment = data.get('payment', None)
 
 
-        if product_id == None or shipper_id == None or price_buy == None or count == None:
-            raise ValidationError(detail={"product_id": "required", "shipper_id": "required", "price_buy": "required", "count": "required"})
+        if product_id == None or shipper_id == None or price_buy == None or count == None or payment== None:
+            raise ValidationError(detail={
+                "product_id": "required", 
+                "shipper_id": "required", 
+                "price_buy": "required", 
+                "count": "required",
+                "payment": "required"
+            })
         try:
             product = ProductList.objects.get(id=product_id)
             shipper = Shipper.objects.get(id=shipper_id)
@@ -218,6 +230,21 @@ class GenBarcodeView(APIView):
             raise ValidationError(detail=ex)
 
         return Response({"barcode":barcode})
+
+class ShipmentHistoryAPIView(APIView):
+    def get(self, request):
+        data = request.data
+        product_id = data.get('product_id', None)
+        if product_id==None:
+            raise ValidationError({"product_id": "required"})
+        try:
+            product = ProductList.objects.get(id=product_id)
+            shipments = Store.objects.filter(product=product)
+            serializer = StoreSerializer(shipments, many=True)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
+
+        return Response(serializer.data)
 
 class TableListCreateAPIView(ListCreateAPIView):
     queryset = Table.objects.all()
@@ -341,8 +368,7 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
                 "total_left":StoreAllSerializer(store_all).data['total_left'],
             })
         else:
-            raise ValidationError(detail="In Store only "+str(store_all.total_left)+" left. "+"but you required "+str(count))
-     
+            raise ValidationError(detail="In Store only "+str(store_all.total_left)+" left. "+"but you required "+str(count)) 
 
 class ProductSellUpdateAPIView(UpdateAPIView):
     queryset = ProductSell.objects.all()

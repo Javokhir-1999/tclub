@@ -3,15 +3,18 @@ from . import views
 
 urlpatterns = [
     path('login', views.LoginView.as_view()),
+
     path('user', views.CustomUserListCreateView.as_view()),
     path('user/<int:pk>', views.CustomUserRetrieveDestroyView.as_view()),
     path('user-update/<int:pk>', views.CustomUserUpdateAPIView.as_view()),
 
     path('product-store', views.ProductStoreListAPIView.as_view()),
+    path('poduct-store-filter', views.ShipmentHistoryAPIView.as_view()),
     path('product-store-add', views.AddToStoreAPIView.as_view()),
     path('product-store/<int:pk>', views.ProductStoreAllRetrieveDestroyView.as_view()),
 
     path('product-type', views.ProductTypeListCreateView.as_view()),
+    path('product-type-update/<int:pk>', views.ProductTypeUpdateAPIView.as_view()),
     path('product-type/<int:pk>', views.ProductTypeRetrieveDestroyView.as_view()),
 
     path('product-list', views.ProductListCreateAPIView.as_view()),
