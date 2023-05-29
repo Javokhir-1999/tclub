@@ -9,7 +9,7 @@ urlpatterns = [
     path('user-update/<int:pk>', views.CustomUserUpdateAPIView.as_view()),
 
     path('product-store', views.ProductStoreListAPIView.as_view()),
-    path('poduct-store-filter', views.ShipmentHistoryAPIView.as_view()),
+    path('poduct-store-history', views.ShipmentHistoryAPIView.as_view()),
     path('product-store-add', views.AddToStoreAPIView.as_view()),
     path('product-store/<int:pk>', views.ProductStoreRetrieveDestroyView.as_view()),
 
@@ -40,7 +40,8 @@ urlpatterns = [
 
     path('product-sell', views.ProductSellListCreateAPIView.as_view()),
     path('product-sell-update/<int:pk>', views.ProductSellUpdateAPIView.as_view()),
-    path('product-sell-filter', views.ProductSellHistoryAPIView.as_view()),
+    path('product-sell-filter', views.ProductListFindView.as_view()),
+    path('product-sell-history', views.ProductSellHistoryAPIView.as_view()),
     path('product-sell/<int:pk>', views.ProductSellRetrieveDestroyView.as_view()),
 
     path('generate-barcode', views.GenBarcodeView.as_view()),
