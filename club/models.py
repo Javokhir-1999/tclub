@@ -101,7 +101,7 @@ class ProductSellCheck(models.Model):
     def __str__(self):
         return self.order_uuid
 
-class StoreAll(models.Model):
+class Stock(models.Model):
     barcode = models.PositiveBigIntegerField(null=False, unique=True)
     total_left = models.PositiveBigIntegerField()
     updated_at = models.DateTimeField(auto_now=True)

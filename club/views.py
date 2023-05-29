@@ -5,13 +5,15 @@ from rest_framework.generics import (DestroyAPIView, ListAPIView,
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.db.models import Q
-
+from datetime import date, datetime, timedelta, time
+date = date.today()
 from .models import (ProductType, ProductList, Shipper, 
     Store, Payment, Client, CustomUser, Table, ProductSell, 
-    ProductSellCheck, StoreAll, Discount, Order, OrderCheck, Barcode)
+    ProductSellCheck, Stock, Discount, Order, OrderCheck, Barcode)
 from .serializers import (
     ProductSellSerializer,
     ProductSellCUSerializer,
@@ -27,7 +29,12 @@ from .serializers import (
     ProductTypeSerializer,
     ProductListSerializer,
     ShipperSerializer,
-    StoreAllSerializer)
+    StockSerializer)
+
+class ResultsSetPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class LoginView(APIView):
     permission_classes = []
@@ -76,7 +83,7 @@ class ProductStoreListAPIView(ListAPIView):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
 
-class ProductStoreAllRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
+class ProductStoreRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
     
@@ -195,13 +202,13 @@ class AddToStoreAPIView(APIView):
 
 
         try:
-            in_store = StoreAll.objects.get(barcode=product_add.barcode)
+            in_store = Stock.objects.get(barcode=product_add.barcode)
             in_store.total_left += product_add.count
             in_store.save() 
             # Because the super class save method doesn't return anything
-            stored_product = StoreAll.objects.get(barcode=product_add.barcode)
+            stored_product = Stock.objects.get(barcode=product_add.barcode)
         except Exception as ex:
-            stored_product = StoreAll.objects.create(
+            stored_product = Stock.objects.create(
                 barcode=product_add.barcode,
                 total_left=product_add.count)
 
@@ -232,15 +239,86 @@ class GenBarcodeView(APIView):
         return Response({"barcode":barcode})
 
 class ShipmentHistoryAPIView(APIView):
+    pagination_class = ResultsSetPagination
     def get(self, request):
-        data = request.data
-        product_id = data.get('product_id', None)
+        product_id = self.request.GET.get('product_id', None)
+        timeframe = self.request.GET.get('timeframe', None)
         if product_id==None:
-            raise ValidationError({"product_id": "required"})
+            raise ValidationError({"product_id": "param: required", "timeframe": "param: not required", "page_size": "param: not required", })
+        
+        query_filter: Q = Q()
         try:
             product = ProductList.objects.get(id=product_id)
-            shipments = Store.objects.filter(product=product)
-            serializer = StoreSerializer(shipments, many=True)
+            if timeframe == None:
+                pass
+            elif timeframe == 'day':
+                today_time_min = datetime.combine(date, time.min)
+                today_time_max = datetime.now()
+                query_filter = query_filter & Q(created_at__range=(today_time_min, today_time_max))
+
+            elif timeframe == 'week':
+                start_week = datetime.now() - timedelta(weeks=1)
+                end_week = datetime.now()
+                query_filter = query_filter & Q(created_at__range=(start_week, end_week))
+
+            elif timeframe == 'month':
+                start_month = datetime.now() - timedelta(weeks=4)
+                end_month = datetime.now()
+                query_filter = query_filter & Q(created_at__range=(start_month, end_month))
+
+            elif timeframe == 'year':
+                start_year = datetime.now() - timedelta(days=365)
+                end_year = datetime.now()
+                query_filter = query_filter & Q(created_at__range=(start_year, end_year))
+
+            else:
+                raise ValidationError(detail="not valid 'timeframe'")
+
+            queryset = Store.objects.filter(Q(product=product) & query_filter)
+            serializer = StoreSerializer(queryset, many=True)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
+
+        return Response(serializer.data)
+
+class ProductSellHistoryAPIView(APIView):
+    pagination_class = ResultsSetPagination
+    def get(self, request):
+        product_id = self.request.GET.get('product_id', None)
+        timeframe = self.request.GET.get('timeframe', None)
+        if product_id==None:
+            raise ValidationError({"product_id": "param: required", "timeframe": "param: not required", "page_size": "param: not required", })
+        
+        query_filter: Q = Q()
+        try:
+            product = ProductList.objects.get(id=product_id)
+            if timeframe == None:
+                pass
+            elif timeframe == 'day':
+                today_time_min = datetime.combine(date, time.min)
+                today_time_max = datetime.now()
+                query_filter = query_filter & Q(sold_time__range=(today_time_min, today_time_max))
+
+            elif timeframe == 'week':
+                start_week = datetime.now() - timedelta(weeks=1)
+                end_week = datetime.now()
+                query_filter = query_filter & Q(sold_time__range=(start_week, end_week))
+
+            elif timeframe == 'month':
+                start_month = datetime.now() - timedelta(weeks=4)
+                end_month = datetime.now()
+                query_filter = query_filter & Q(sold_time__range=(start_month, end_month))
+
+            elif timeframe == 'year':
+                start_year = datetime.now() - timedelta(days=365)
+                end_year = datetime.now()
+                query_filter = query_filter & Q(sold_time__range=(start_year, end_year))
+
+            else:
+                raise ValidationError(detail="not valid 'timeframe'")
+
+            queryset = ProductSell.objects.filter(Q(product=product) & query_filter)
+            serializer = ProductSellSerializer(queryset, many=True)
         except Exception as ex:
             raise ValidationError(detail=ex)
 
@@ -323,9 +401,8 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
         table_id = data.get('table_id', None)
         operator_id = data.get('operator_id', None)
         product_barcode = data.get('product_barcode', None)
-        count = int(data.get('count', None))
-        price_sell = int(data.get('price_sell', None))
-
+        count = data.get('count', None)
+        price_sell = data.get('price_sell', None)
         if operator_id == None or product_barcode == None or count == None or price_sell == None:
             raise ValidationError(detail={
                 "operator_id": "required", 
@@ -335,10 +412,12 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
                 "table_id": "not required",
                 "client_id": "not required",
             })
+        count = int(count)
+        price_sell = int(price_sell)
 
         try:
             product = ProductList.objects.get(barcode=product_barcode)
-            store_all = StoreAll.objects.get(barcode=product_barcode)
+            store_all = Stock.objects.get(barcode=product_barcode)
             operator = CustomUser.objects.get(id=operator_id)
             if client_id:
                 client = Client.objects.get(id=int(client_id))
@@ -365,7 +444,7 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
             store_all.save()
             return Response({
                 "product_sell":ProductSellSerializer(product_sell).data,
-                "total_left":StoreAllSerializer(store_all).data['total_left'],
+                "total_left":StockSerializer(store_all).data['total_left'],
             })
         else:
             raise ValidationError(detail="In Store only "+str(store_all.total_left)+" left. "+"but you required "+str(count)) 

@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group as DjGroup
 
 from .models import (ProductType, ProductList, Shipper, 
     Store, Payment, Client, CustomUser, Table, ProductSell, 
-    ProductSellCheck, StoreAll, Discount, Order, OrderCheck, Barcode)
+    ProductSellCheck, Stock, Discount, Order, OrderCheck, Barcode)
 
 admin.site.unregister(DjGroup)
 # admin.site.unregister(DjUser)
@@ -26,7 +26,7 @@ class ProductSellAdmin(admin.ModelAdmin):
     list_display = ('client', 'table', 'barcode', 'product', 'operator', 'price_sell', 'count', 'sold_time')
 class ProductSellCheckAdmin(admin.ModelAdmin):
     list_display = ('id', 'product_sell', 'operator', 'client', 'total_price', 'created_at', 'updated_at')
-class StoreAllAdmin(admin.ModelAdmin):
+class StockAdmin(admin.ModelAdmin):
     list_display = ('barcode', 'total_left', 'updated_at')
 class DiscountAdmin(admin.ModelAdmin):
     list_display = ('title', 'minute', 'percent', 'created_at', 'updated_at')
@@ -51,7 +51,7 @@ admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Table, TableAdmin)
 admin.site.register(ProductSell, ProductSellAdmin)
 admin.site.register(ProductSellCheck, ProductSellCheckAdmin)
-admin.site.register(StoreAll, StoreAllAdmin)
+admin.site.register(Stock, StockAdmin)
 admin.site.register(Discount, DiscountAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderCheck, OrderCheckAdmin)

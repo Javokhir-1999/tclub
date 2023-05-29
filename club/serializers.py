@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from .models import (ProductType, ProductList, Shipper, 
     Store, Client, CustomUser, Table, ProductSell, Payment, 
-    ProductSellCheck, StoreAll, Discount, Order, OrderCheck, Barcode)
+    ProductSellCheck, Stock, Discount, Order, OrderCheck, Barcode)
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class CustomUserTokenSerializer(serializers.ModelSerializer):
@@ -46,8 +46,9 @@ class ProductTypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductListSerializer(serializers.ModelSerializer):
-    shipment = serializers.SerializerMethodField('get_shipment')
-    sales = serializers.SerializerMethodField('get_sales')
+    # shipment = serializers.SerializerMethodField('get_shipment')
+    # sales = serializers.SerializerMethodField('get_sales')
+    total_left = serializers.SerializerMethodField('get_total_left')
     class Meta:
         model = ProductList
         fields = '__all__'
@@ -65,7 +66,13 @@ class ProductListSerializer(serializers.ModelSerializer):
             }
         except Exception as ex:
             raise ValidationError(ex)
-
+    def get_total_left(self, obj):
+        total_count=0
+        try:
+            total = Stock.objects.get(barcode=obj.barcode)
+            return total.total_left
+        except Exception as ex:
+            raise ValidationError(ex)
     def get_sales(self, obj):
         total_sell_count = 0
         total_sell_price = 0
@@ -86,14 +93,14 @@ class ProductListCUSerializer(serializers.ModelSerializer):
         model = ProductList
         fields = '__all__'
 
-class StoreAllSerializer(serializers.ModelSerializer):
+class StockSerializer(serializers.ModelSerializer):
     class Meta:
-        model = StoreAll
+        model = Stock
         fields = '__all__'
 
-class StoreAllSerializer(serializers.ModelSerializer):
+class StockSerializer(serializers.ModelSerializer):
     class Meta:
-        model = StoreAll
+        model = Stock
         fields = '__all__'
 
 class StoreSerializer(serializers.ModelSerializer):
@@ -154,7 +161,7 @@ class ProductSellSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductSell
         fields = '__all__'
-        depth=2
+        # depth=2
 
 class ProductSellCUSerializer(serializers.ModelSerializer):
     class Meta:
@@ -163,13 +170,11 @@ class ProductSellCUSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         try:
-            in_store = StoreAll.objects.get(barcode=validated_data.barcode)
+            in_store = Stock.objects.get(barcode=validated_data.barcode)
             in_store.total_left -= validated_data.count
             in_store.save()
         except Exception as ex:
-            stored_product = StoreAll.objects.create(
-                barcode=product_add.barcode,
-                total_left=product_add.count)
+            raise ValidationError(ex)
 
         return super().create(validated_data)
 

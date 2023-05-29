@@ -11,7 +11,7 @@ urlpatterns = [
     path('product-store', views.ProductStoreListAPIView.as_view()),
     path('poduct-store-filter', views.ShipmentHistoryAPIView.as_view()),
     path('product-store-add', views.AddToStoreAPIView.as_view()),
-    path('product-store/<int:pk>', views.ProductStoreAllRetrieveDestroyView.as_view()),
+    path('product-store/<int:pk>', views.ProductStoreRetrieveDestroyView.as_view()),
 
     path('product-type', views.ProductTypeListCreateView.as_view()),
     path('product-type-update/<int:pk>', views.ProductTypeUpdateAPIView.as_view()),
@@ -40,6 +40,7 @@ urlpatterns = [
 
     path('product-sell', views.ProductSellListCreateAPIView.as_view()),
     path('product-sell-update/<int:pk>', views.ProductSellUpdateAPIView.as_view()),
+    path('product-sell-filter', views.ProductSellHistoryAPIView.as_view()),
     path('product-sell/<int:pk>', views.ProductSellRetrieveDestroyView.as_view()),
 
     path('generate-barcode', views.GenBarcodeView.as_view()),
