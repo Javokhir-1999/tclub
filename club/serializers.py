@@ -72,7 +72,8 @@ class ProductListSerializer(serializers.ModelSerializer):
             total = Stock.objects.get(barcode=obj.barcode)
             return total.total_left
         except Exception as ex:
-            raise ValidationError(ex)
+            Stock.objects.create(barcode=obj.barcode, total_left=0)
+            return 0
     def get_sales(self, obj):
         total_sell_count = 0
         total_sell_price = 0
