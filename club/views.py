@@ -235,7 +235,7 @@ class ClientListFindView(ListAPIView):
     def get_queryset(self):
         filter = self.request.GET.get('filter', None)
         try:
-            return Client.objects.filter(name_contains=filter)
+            return Client.objects.filter(name__contains=filter)
         except Exception as ex:
             try:
                 return Client.objects.filter(phone__contains=filter)
