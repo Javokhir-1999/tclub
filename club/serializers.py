@@ -126,7 +126,6 @@ class StoreSerializer(serializers.ModelSerializer):
             return total_pay
         except Exception as ex:
             raise ValidationError(ex)
-
             
 class StoreCSerializer(serializers.ModelSerializer):
     class Meta:
@@ -143,10 +142,38 @@ class BarcodeSerializer(serializers.ModelSerializer):
         model = Barcode
         fields = '__all__'
 
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = '__all__'
+        depth=2
+
 class TableSerializer(serializers.ModelSerializer):
+    order = serializers.SerializerMethodField('get_order')
+    check_list = serializers.SerializerMethodField('get_check_list')
     class Meta:
         model = Table
         fields = '__all__'
+
+    def get_order(self, obj):
+        try:
+            return OrderSerializer(Order.objects.get(table=obj)).data
+        except Exception as ex:
+            return None
+    
+    def get_check_list(self, obj):
+        try:
+            total_price=0
+            order = Order.objects.get(table=obj)
+            product_sell_list = ProductSell.objects.filter(order=order, pay_status=True)
+            for product in product_sell_list:
+                total_price += product.price_sell * product.count
+            return{
+                "list": ProductSellSerializer(product_sell_list, many=True).data,
+                "total_price": total_price
+            } 
+        except Exception as ex:
+            return None
 
 class DiscountSerializer(serializers.ModelSerializer):
     class Meta:
@@ -162,7 +189,6 @@ class ProductSellSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductSell
         fields = '__all__'
-        # depth=2
 
 class ProductSellCUSerializer(serializers.ModelSerializer):
     class Meta:
@@ -181,12 +207,6 @@ class ProductSellCUSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
-
-class OrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-        fields = '__all__'
-        depth=2
 
 class OrderCUSerializer(serializers.ModelSerializer):
     class Meta:

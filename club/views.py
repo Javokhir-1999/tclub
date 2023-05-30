@@ -439,10 +439,8 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
             operator = CustomUser.objects.get(id=operator_id)
             if order_id:
                 order = Order.objects.get(id=int(order_id))
-                table = Table.objects.get(order.table)
             else:
                 order = None
-                table = None
 
         except Exception as ex:
             raise ValidationError(ex)
