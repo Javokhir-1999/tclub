@@ -75,13 +75,38 @@ class Table(models.Model):
     def __str__(self):
         return self.name
 
+class Order(models.Model):
+    uuid = models.UUIDField(default=uuid4, editable=False)
+    client = models.ForeignKey(Client, on_delete=models.PROTECT)
+    table = models.ForeignKey(Table, on_delete=models.PROTECT)
+    operator = models.ForeignKey(CustomUser, on_delete=models.PROTECT)
+    vip = models.BooleanField(null=False)
+    time_open = models.DateTimeField()
+    time_close = models.DateTimeField(null=True, blank=True)
+    pay_status = models.BooleanField(
+        default=True, 
+        help_text="True = Open (not payed)", 
+        choices=((True, "Open - no payed"), (False, "Closed - payed")))
+    play_status = models.CharField(
+        max_length=50, 
+        choices=(
+            ("paused", "Приостоновлена"),
+            ("active", "Активна"),
+            ("ended", "Завершена")),
+        default="paused",
+        blank=False,
+        null=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return self.uuid
+
 class ProductSell(models.Model):
-    client = models.ForeignKey(Client, on_delete=models.PROTECT, null=True, blank=True)
-    table = models.ForeignKey(Table, on_delete=models.PROTECT, null=True, blank=True)
+    order = models.ForeignKey(Order, on_delete=models.PROTECT, null=True, blank=True)
     barcode = models.PositiveBigIntegerField(null=False, unique=False)
     product = models.ForeignKey(ProductList, on_delete=models.PROTECT)
     operator = models.ForeignKey(CustomUser, on_delete=models.PROTECT)
-    status = models.BooleanField(
+    pay_status = models.BooleanField(
         default=True, 
         help_text="True = Open (not payed)", 
         choices=((True, "Open - no payed"), (False, "Closed - payed")))
@@ -95,6 +120,7 @@ class ProductSellCheck(models.Model):
     product_sell = models.TextField(help_text="contains a list of sold products")
     operator = models.CharField(max_length=255, help_text="operator ID-name")
     client = models.CharField(max_length=255, help_text="client ID-name", null=True, blank=True)
+    order = models.CharField(max_length=255, help_text="order ID-name", null=True, blank=True)
     total_price = models.PositiveBigIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -116,23 +142,6 @@ class Discount(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     def __str__(self):
         return self.title
-
-class Order(models.Model):
-    uuid = models.UUIDField(default=uuid4, editable=False)
-    client = models.ForeignKey(Client, on_delete=models.PROTECT)
-    table = models.ForeignKey(Table, on_delete=models.PROTECT)
-    operator = models.ForeignKey(CustomUser, on_delete=models.PROTECT)
-    vip = models.BooleanField(null=False)
-    time_open = models.DateTimeField()
-    time_close = models.DateTimeField(null=True, blank=True)
-    status = models.BooleanField(
-        default=True, 
-        help_text="True = Open (not payed)", 
-        choices=((True, "Open - no payed"), (False, "Closed - payed")))
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    def __str__(self):
-        return self.uuid
 
 class OrderCheck(models.Model):
     order_uuid = models.UUIDField(default=uuid4, editable=False)

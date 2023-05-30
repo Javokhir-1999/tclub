@@ -29,6 +29,7 @@ from .serializers import (
     ProductTypeSerializer,
     ProductListSerializer,
     ShipperSerializer,
+    OrderSerializer,
     StockSerializer)
 
 class ResultsSetPagination(PageNumberPagination):
@@ -242,13 +243,14 @@ class ShipmentHistoryAPIView(APIView):
     pagination_class = ResultsSetPagination
     def get(self, request):
         product_id = self.request.GET.get('product_id', None)
+        shipper_id = self.request.GET.get('shipper_id', None)
         timeframe = self.request.GET.get('timeframe', None)
-        if product_id==None:
-            raise ValidationError({"product_id": "param: required", "timeframe": "param: not required", "page_size": "param: not required", })
+        if product_id==None and shipper_id==None:
+            raise ValidationError({"product_id or shipper_id": "param: required", "timeframe": "param: not required", "page_size": "param: not required", })
         
         query_filter: Q = Q()
         try:
-            product = ProductList.objects.get(id=product_id)
+            
             if timeframe == None:
                 pass
             elif timeframe == 'day':
@@ -273,8 +275,13 @@ class ShipmentHistoryAPIView(APIView):
 
             else:
                 raise ValidationError(detail="not valid 'timeframe'")
+            if product_id:
+                product = ProductList.objects.get(id=product_id)
+                queryset = Store.objects.filter(Q(product=product) & query_filter)
+            elif shipper_id:
+                shipper = Shipper.objects.get(id=shipper_id)
+                queryset = Store.objects.filter(Q(shipper=shipper) & query_filter)
 
-            queryset = Store.objects.filter(Q(product=product) & query_filter)
             serializer = StoreSerializer(queryset, many=True)
         except Exception as ex:
             raise ValidationError(detail=ex)
@@ -397,8 +404,7 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        client_id = data.get('client_id', None)
-        table_id = data.get('table_id', None)
+        order_id = data.get('order_id', None)
         operator_id = data.get('operator_id', None)
         product_barcode = data.get('product_barcode', None)
         count = data.get('count', None)
@@ -409,8 +415,7 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
                 "product_barcode": "required", 
                 "count": "required", 
                 "price_sell": "required",
-                "table_id": "not required",
-                "client_id": "not required",
+                "order_id": "not required",
             })
         count = int(count)
         price_sell = int(price_sell)
@@ -419,14 +424,13 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
             product = ProductList.objects.get(barcode=product_barcode)
             store_all = Stock.objects.get(barcode=product_barcode)
             operator = CustomUser.objects.get(id=operator_id)
-            if client_id:
-                client = Client.objects.get(id=int(client_id))
+            if order_id:
+                order = Order.objects.get(id=int(order_id))
+                table = Table.objects.get(order.table)
             else:
-                client = None
-            if table_id:
-                table = Table.objects.get(id=int(table_id))
-            else:
+                order = None
                 table = None
+
         except Exception as ex:
             raise ValidationError(ex)
         
@@ -435,7 +439,7 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
                 product = product,
                 barcode = product.barcode,
                 count = count,
-                client = client,
+                order = order,
                 table = table,
                 operator = operator,
                 price_sell = price_sell,

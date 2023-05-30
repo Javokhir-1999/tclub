@@ -23,7 +23,7 @@ class CustomUserAdmin(admin.ModelAdmin):
 class TableAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'price', 'minute', 'in_use', 'active')
 class ProductSellAdmin(admin.ModelAdmin):
-    list_display = ('client', 'table', 'barcode', 'product', 'operator', 'price_sell', 'count', 'sold_time')
+    list_display = ('order', 'barcode', 'product', 'operator', 'pay_status', 'price_sell', 'count', 'sold_time')
 class ProductSellCheckAdmin(admin.ModelAdmin):
     list_display = ('id', 'product_sell', 'operator', 'client', 'total_price', 'created_at', 'updated_at')
 class StockAdmin(admin.ModelAdmin):
@@ -31,7 +31,7 @@ class StockAdmin(admin.ModelAdmin):
 class DiscountAdmin(admin.ModelAdmin):
     list_display = ('title', 'minute', 'percent', 'created_at', 'updated_at')
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'client', 'table', 'operator', 'vip', 'time_open', 'time_close', 'status', 'created_at', 'updated_at')
+    list_display = ('uuid', 'client', 'table', 'operator', 'vip', 'time_open', 'time_close', 'pay_status', 'play_status', 'created_at', 'updated_at')
 
 class OrderCheckAdmin(admin.ModelAdmin):
     list_display = ('order_uuid', 'client', 'operator', 'time_open', 'time_close', 'played_minute', 'table_minute_price', 'discount_percent', 'total_price', 'created_at', 'updated_at')
