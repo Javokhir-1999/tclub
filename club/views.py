@@ -230,6 +230,18 @@ class ProductListFindView(ListAPIView):
             except:
                 raise ValidationError()
 
+class ClientListFindView(ListAPIView):
+    serializer_class = ClientSerializer
+    def get_queryset(self):
+        filter = self.request.GET.get('filter', None)
+        try:
+            return Client.objects.filter(name_contains=filter)
+        except Exception as ex:
+            try:
+                return Client.objects.filter(phone__contains=filter)
+            except:
+                raise ValidationError()
+
 class GenBarcodeView(APIView):
     def get(self, request):
         try:
@@ -419,49 +431,63 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
         data = request.data
         order_id = data.get('order_id', None)
         operator_id = data.get('operator_id', None)
-        product_barcode = data.get('product_barcode', None)
-        count = data.get('count', None)
-        price_sell = data.get('price_sell', None)
-        if operator_id == None or product_barcode == None or count == None or price_sell == None:
+        products = data.get('products', None)
+        if operator_id == None or products==None:
             raise ValidationError(detail={
                 "operator_id": "required", 
-                "product_barcode": "required", 
-                "count": "required", 
-                "price_sell": "required",
                 "order_id": "not required",
+                "products":[
+                    {
+                        "product_barcode": "required", 
+                        "count": "required", 
+                        "price_sell": "required",
+                    },
+                ]
+                
             })
-        count = int(count)
-        price_sell = int(price_sell)
-
+            
         try:
-            product = ProductList.objects.get(barcode=product_barcode)
-            store_all = Stock.objects.get(barcode=product_barcode)
             operator = CustomUser.objects.get(id=operator_id)
             if order_id:
                 order = Order.objects.get(id=int(order_id))
             else:
                 order = None
+    
+            validated_products = []
+            for p in products: 
+                store_all = Stock.objects.get(barcode=p['product_barcode'])
+                if store_all.total_left < int(p['count']):
+                    raise ValidationError(detail="In Store only "+str(store_all.total_left)+" left. "+"but you required "+str(p['count']))
+        
+
+            for p in products: 
+
+                product = ProductList.objects.get(barcode=p['product_barcode'])
+                store_all = Stock.objects.get(barcode=p['product_barcode'])
+
+                if store_all.total_left >= int(p['count']):
+                    product_sell = ProductSell.objects.create(
+                        product = product,
+                        barcode = product.barcode,
+                        count = p['count'],
+                        order = order,
+                        operator = operator,
+                        price_sell = p['price_sell'],
+                    )
+
+                    store_all.total_left -= int(p['count'])
+                    store_all.save()
+                    validated_products.append({
+                        "product_sell":ProductSellSerializer(product_sell).data,
+                        "total_left":StockSerializer(store_all).data['total_left'],
+                    })
+                else:
+                    raise ValidationError(detail="In Store only "+str(store_all.total_left)+" left. "+"but you required "+str(p['count']))
 
         except Exception as ex:
             raise ValidationError(ex)
-        
-        if store_all.total_left >= count:
-            product_sell = ProductSell.objects.create(
-                product = product,
-                barcode = product.barcode,
-                count = count,
-                order = order,
-                operator = operator,
-                price_sell = price_sell,
-            )
-            store_all.total_left -= count
-            store_all.save()
-            return Response({
-                "product_sell":ProductSellSerializer(product_sell).data,
-                "total_left":StockSerializer(store_all).data['total_left'],
-            })
-        else:
-            raise ValidationError(detail="In Store only "+str(store_all.total_left)+" left. "+"but you required "+str(count)) 
+
+        return Response(validated_products)
 
 class ProductSellUpdateAPIView(UpdateAPIView):
     queryset = ProductSell.objects.all()

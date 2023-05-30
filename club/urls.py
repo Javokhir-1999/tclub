@@ -36,6 +36,7 @@ urlpatterns = [
 
     path('client', views.ClientListCreateAPIView.as_view()),
     path('client-update/<int:pk>', views.ClientUpdateAPIView.as_view()),
+    path('client-filter', views.ClientListFindView.as_view()),
     path('client/<int:pk>', views.ClientRetrieveDestroyView.as_view()),
 
     path('product-sell', views.ProductSellListCreateAPIView.as_view()),
