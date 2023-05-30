@@ -401,6 +401,7 @@ class DiscountRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
 class ClientListCreateAPIView(ListCreateAPIView):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
+    pagination_class = ResultsSetPagination
 
 class ClientUpdateAPIView(UpdateAPIView):
     queryset = Client.objects.all()
