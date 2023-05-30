@@ -44,5 +44,7 @@ urlpatterns = [
     path('product-sell-history', views.ProductSellHistoryAPIView.as_view()),
     path('product-sell/<int:pk>', views.ProductSellRetrieveDestroyView.as_view()),
 
+    path('order', views.OrderListCreateAPIView.as_view()),
+
     path('generate-barcode', views.GenBarcodeView.as_view()),
 ]

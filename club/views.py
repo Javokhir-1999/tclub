@@ -30,6 +30,7 @@ from .serializers import (
     ProductListSerializer,
     ShipperSerializer,
     OrderSerializer,
+    OrderCUSerializer,
     StockSerializer)
 
 class ResultsSetPagination(PageNumberPagination):
@@ -334,6 +335,18 @@ class ProductSellHistoryAPIView(APIView):
 class TableListCreateAPIView(ListCreateAPIView):
     queryset = Table.objects.all()
     serializer_class = TableSerializer
+    def list(self, request):
+        filter = self.request.GET.get('filter', None)
+        try:
+            if filter:
+                queryset = Table.objects.filter(in_use=filter)
+            else:
+                queryset = self.get_queryset()
+        except Exception as ex:
+            raise ValidationError(ex)
+
+        serializer = TableSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 class TableUpdateAPIView(UpdateAPIView):
     queryset = Table.objects.all()
@@ -440,7 +453,6 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
                 barcode = product.barcode,
                 count = count,
                 order = order,
-                table = table,
                 operator = operator,
                 price_sell = price_sell,
             )
@@ -469,3 +481,50 @@ class ProductSellRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
             return Response('Deleted Successfully', status=201)
         except Exception as ex:
             raise ValidationError(detail=ex)
+
+class OrderListCreateAPIView(ListCreateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderCUSerializer
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = OrderSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        client_id = data.get('client_id', None)
+        operator_id = data.get('operator_id', None)
+        table_id = data.get('table_id', None)
+        vip = data.get('vip', None)
+        limit = data.get('limit', None)
+        if operator_id == None or table_id == None or vip == None:
+            raise ValidationError(detail={
+                "operator_id": "required",
+                "table_id": "required",
+                "vip": "boolean, required", 
+                "client_id": "not required",
+            })
+        try:
+            operator = CustomUser.objects.get(id=int(operator_id))
+            table = Table.objects.get(id=int(table_id), in_use=False)
+            if client_id:
+                client = Client.objects.get(id=int(client_id))
+            else:
+                client = None
+            if vip:
+                vip = True
+            order = Order.objects.create(
+                client = client,
+                table = table,
+                operator = operator,
+                vip = vip,
+                limit = limit,
+                play_status = "active",
+                time_open = datetime.now(),
+            )
+            table.in_use = True
+            table.save()
+            return Response(OrderSerializer(order, many=False).data)
+        except Exception as ex:
+            raise ValidationError(ex)
+            

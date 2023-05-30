@@ -31,7 +31,7 @@ class StockAdmin(admin.ModelAdmin):
 class DiscountAdmin(admin.ModelAdmin):
     list_display = ('title', 'minute', 'percent', 'created_at', 'updated_at')
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'client', 'table', 'operator', 'vip', 'time_open', 'time_close', 'pay_status', 'play_status', 'created_at', 'updated_at')
+    list_display = ('uuid', 'client', 'table', 'operator', 'vip', 'limit', 'time_open', 'time_close', 'pay_status', 'play_status', 'created_at', 'updated_at')
 
 class OrderCheckAdmin(admin.ModelAdmin):
     list_display = ('order_uuid', 'client', 'operator', 'time_open', 'time_close', 'played_minute', 'table_minute_price', 'discount_percent', 'total_price', 'created_at', 'updated_at')

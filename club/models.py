@@ -20,7 +20,7 @@ class ProductType(models.Model):
         return self.name
 
 class ProductList(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     type = models.ForeignKey(ProductType, on_delete=models.PROTECT)
     barcode = models.PositiveBigIntegerField(null=False, unique=True)
     price_sell = models.PositiveBigIntegerField()
@@ -67,7 +67,7 @@ class Client(models.Model):
         return self.name
 
 class Table(models.Model):
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=128, unique=True)
     price = models.PositiveBigIntegerField()
     minute = models.PositiveBigIntegerField()
     in_use = models.BooleanField(default=False)
@@ -80,7 +80,8 @@ class Order(models.Model):
     client = models.ForeignKey(Client, on_delete=models.PROTECT)
     table = models.ForeignKey(Table, on_delete=models.PROTECT)
     operator = models.ForeignKey(CustomUser, on_delete=models.PROTECT)
-    vip = models.BooleanField(null=False)
+    vip = models.BooleanField(null=False, default=False)
+    limit = models.PositiveBigIntegerField(null=True, blank=True)
     time_open = models.DateTimeField()
     time_close = models.DateTimeField(null=True, blank=True)
     pay_status = models.BooleanField(
