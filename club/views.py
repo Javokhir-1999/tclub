@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
+from django.db.models import Sum
 from django.db.models import Q
 from datetime import date, datetime, timedelta, time
 date = date.today()
@@ -338,6 +338,7 @@ class ProductSellHistoryAPIView(APIView):
                 raise ValidationError(detail="not valid 'timeframe'")
 
             queryset = ProductSell.objects.filter(Q(product=product) & query_filter)
+            # queryset = ProductSell.objects.filter(Q(product=product) & query_filter).aggregate(total=Sum('count'))
             serializer = ProductSellSerializer(queryset, many=True)
         except Exception as ex:
             raise ValidationError(detail=ex)

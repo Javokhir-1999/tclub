@@ -186,6 +186,7 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductSellSerializer(serializers.ModelSerializer):
+    product = ProductListSerializer()
     class Meta:
         model = ProductSell
         fields = '__all__'
