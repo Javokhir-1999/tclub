@@ -421,6 +421,58 @@ class ClientRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
         except Exception as ex:
             raise ValidationError(detail=ex)
 
+class OrderCloseAPIView(APIView):
+    def post(self, request, format=None):
+        data = request.data
+        order_id = data.get('order_id', None)
+
+        try:    
+            total_play_price=0
+            total_product_price=0
+
+            order = Order.objects.get(id=order_id)
+            timer = int(round((datetime.now() - order.time_open).total_seconds() / 60.0, 2))
+
+            try:
+                discount = Discount.objects.filter(minute__lte=timer).order_by('minute').last()
+                discount_percent = discount.percent
+            except:
+                discount = None
+                discount_percent = 0
+
+
+            total_play_price = int(order.table.price * timer / order.table.minute)
+
+
+            if discount_percent: 
+                total_play_price_with_discount = total_play_price - total_play_price * (discount_percent / 100)
+            else:
+                total_play_price_with_discount = total_play_price
+
+            product_sell_list = ProductSell.objects.filter(order=order, pay_status=True)
+            
+            if product_sell_list:
+                for product in product_sell_list:
+                    total_product_price += product.price_sell * product.count
+                product_check_list = ProductSellSerializer(product_sell_list, many=True).data
+            else:
+                product_check_list = None
+
+            return Response({
+                # "discount": discount,
+                "timer": timer,
+                "table_price": str(order.table.price) + "sum for " + str(order.table.minute) + "m",
+                "product_check_list": product_check_list,
+                "total_product_price": total_product_price,
+                "total_play_price": total_play_price,
+                "total_play_price_with_discount": total_play_price_with_discount,
+                "total_price": total_play_price_with_discount + total_product_price,
+            })
+
+        except Exception as ex:
+            raise ValidationError(ex)
+
+
 class ProductSellListCreateAPIView(ListCreateAPIView):
     queryset = ProductSell.objects.all()
     serializer_class = ProductSellCUSerializer
@@ -461,9 +513,7 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
                 if store_all.total_left < int(p['count']):
                     raise ValidationError(detail="In Store only "+str(store_all.total_left)+" left. "+"but you required "+str(p['count']))
         
-
             for p in products: 
-
                 product = ProductList.objects.get(barcode=p['product_barcode'])
                 store_all = Stock.objects.get(barcode=p['product_barcode'])
 

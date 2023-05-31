@@ -102,17 +102,6 @@ class Order(models.Model):
     def __str__(self):
         return self.uuid
 
-# class CheckList(models.Model):
-#     order = models.ForeignKey(Order, on_delete=models.PROTECT, null=True, blank=True)
-#     product = models.ForeignKey(ProductList, on_delete=models.PROTECT)
-#     pay_status = models.BooleanField(
-#         default=True, 
-#         help_text="True = Open (not payed)", 
-#         choices=((True, "Open - no payed"), (False, "Closed - payed")))
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     def __str__(self):
-#         return self.uuid
-
 class ProductSell(models.Model):
     order = models.ForeignKey(Order, on_delete=models.PROTECT, null=True, blank=True)
     barcode = models.PositiveBigIntegerField(null=False, unique=False)
