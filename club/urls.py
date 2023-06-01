@@ -41,7 +41,7 @@ urlpatterns = [
 
     path('product-sell', views.ProductSellListCreateAPIView.as_view()),
     path('product-sell-update/<int:pk>', views.ProductSellUpdateAPIView.as_view()),
-    path('product-sell-filter', views.ProductListFindView.as_view()),
+    # path('product-sell-filter', views.ProductListFindView.as_view()),
     path('product-sell-history', views.ProductSellHistoryAPIView.as_view()),
     path('product-sell/<int:pk>', views.ProductSellRetrieveDestroyView.as_view()),
 

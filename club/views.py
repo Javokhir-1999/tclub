@@ -202,7 +202,6 @@ class AddToStoreAPIView(APIView):
         except Exception as ex:
             raise ValidationError(ex)
 
-
         try:
             in_store = Stock.objects.get(barcode=product_add.barcode)
             in_store.total_left += product_add.count
@@ -219,16 +218,16 @@ class AddToStoreAPIView(APIView):
 class ProductListFindView(ListAPIView):
     serializer_class = ProductListSerializer
     def get_queryset(self):
-        data = self.request.data
-        # filter = data.get('filter', None)
         filter = self.request.GET.get('filter', None)
         try:
-            return ProductList.objects.filter(barcode=filter)
+            result = []
+            pls =  ProductList.objects.filter(Q(barcode__contains=filter) | Q(name__contains=filter))
+            for p in pls:
+                if Stock.objects.filter(Q(barcode=p.barcode) & Q(total_left__gte=1)):
+                    result.append(p)
+            return result
         except Exception as ex:
-            try:
-                return ProductList.objects.filter(name__contains=filter)
-            except:
-                raise ValidationError()
+            raise ValidationError()
 
 class ClientListFindView(ListAPIView):
     serializer_class = ClientSerializer
