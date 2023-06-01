@@ -253,7 +253,6 @@ class GenBarcodeView(APIView):
         return Response({"barcode":barcode})
 
 class ShipmentHistoryAPIView(APIView):
-    pagination_class = ResultsSetPagination
     def get(self, request):
         product_id = self.request.GET.get('product_id', None)
         shipper_id = self.request.GET.get('shipper_id', None)
@@ -302,7 +301,6 @@ class ShipmentHistoryAPIView(APIView):
         return Response(serializer.data)
 
 class ProductSellHistoryAPIView(APIView):
-    pagination_class = ResultsSetPagination
     def get(self, request):
         product_id = self.request.GET.get('product_id', None)
         operator_id = self.request.GET.get('operator_id', None)

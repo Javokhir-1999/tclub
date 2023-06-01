@@ -77,7 +77,7 @@ class Table(models.Model):
 
 class Order(models.Model):
     uuid = models.UUIDField(default=uuid4, editable=False)
-    client = models.ForeignKey(Client, on_delete=models.PROTECT)
+    client = models.ForeignKey(Client, on_delete=models.PROTECT, null=True, blank=True)
     table = models.ForeignKey(Table, on_delete=models.PROTECT)
     operator = models.ForeignKey(CustomUser, on_delete=models.PROTECT)
     vip = models.BooleanField(null=False, default=False)
