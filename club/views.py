@@ -425,32 +425,30 @@ class OrderCloseAPIView(APIView):
     def post(self, request, format=None):
         data = request.data
         order_id = data.get('order_id', None)
+        action = data.get('action', "preview")
 
         try:    
+            try:
+                order = Order.objects.get(id=order_id, pay_status=True)
+            except:
+                raise ValidationError("order not found, wrong id or orderis already closed")
             total_play_price=0
             total_product_price=0
+            total_price = 0
 
-            order = Order.objects.get(id=order_id)
             timer = int(round((datetime.now() - order.time_open).total_seconds() / 60.0, 2))
-
             try:
                 discount = Discount.objects.filter(minute__lte=timer).order_by('minute').last()
-                discount_percent = discount.percent
             except:
                 discount = None
-                discount_percent = 0
-
 
             total_play_price = int(order.table.price * timer / order.table.minute)
-
-
-            if discount_percent: 
-                total_play_price_with_discount = total_play_price - total_play_price * (discount_percent / 100)
+            if discount: 
+                total_play_price_with_discount = total_play_price - total_play_price * (discount.percent / 100)
             else:
                 total_play_price_with_discount = total_play_price
 
             product_sell_list = ProductSell.objects.filter(order=order, pay_status=True)
-            
             if product_sell_list:
                 for product in product_sell_list:
                     total_product_price += product.price_sell * product.count
@@ -458,16 +456,28 @@ class OrderCloseAPIView(APIView):
             else:
                 product_check_list = None
 
-            return Response({
-                # "discount": discount,
-                "timer": timer,
-                "table_price": str(order.table.price) + "sum for " + str(order.table.minute) + "m",
-                "product_check_list": product_check_list,
-                "total_product_price": total_product_price,
-                "total_play_price": total_play_price,
-                "total_play_price_with_discount": total_play_price_with_discount,
-                "total_price": total_play_price_with_discount + total_product_price,
-            })
+            total_price = total_play_price_with_discount + total_product_price
+
+            if action == "preview":
+                return Response({
+                    "product_check_list": product_check_list,
+                    "total_product_price": total_product_price,
+                    "order": OrderSerializer(order, many=False).data,
+                    "timer": timer,
+                    "total_play_price": total_play_price,
+                    "discount": DiscountSerializer(discount, many=False).data,
+                    "total_price": total_price,
+                })
+            elif action == "close":
+                order.play_status = "ended"
+                order.time_close = datetime.now()
+                order.pay_status = False
+                order.save()
+                order.table.in_use = False    
+                order.table.save()
+                return Response("good, order is closed")
+            else:
+                raise ValidationError("worng 'action', choices are: preview, close")
 
         except Exception as ex:
             raise ValidationError(ex)
