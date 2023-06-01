@@ -479,6 +479,12 @@ class OrderCloseAPIView(APIView):
                 order.save()
                 order.table.in_use = False    
                 order.table.save()
+
+                if product_sell_list:
+                    for product in product_sell_list:
+                        product.pay_status = False
+                        product.save()
+
                 return Response("good, order is closed")
             else:
                 raise ValidationError("worng 'action', choices are: preview, close")
@@ -517,6 +523,10 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
             operator = CustomUser.objects.get(id=operator_id)
             if order_id:
                 order = Order.objects.get(id=int(order_id))
+                if not order:
+                    pay_status = False
+                else:
+                    pay_status = True
             else:
                 order = None
     
@@ -529,7 +539,7 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
             for p in products: 
                 product = ProductList.objects.get(barcode=p['product_barcode'])
                 store_all = Stock.objects.get(barcode=p['product_barcode'])
-
+                
                 if store_all.total_left >= int(p['count']):
                     product_sell = ProductSell.objects.create(
                         product = product,
@@ -537,6 +547,7 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
                         count = p['count'],
                         order = order,
                         operator = operator,
+                        pay_status = pay_status,
                         price_sell = p['price_sell'],
                     )
 

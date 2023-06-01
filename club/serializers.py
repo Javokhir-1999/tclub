@@ -157,7 +157,7 @@ class TableSerializer(serializers.ModelSerializer):
 
     def get_order(self, obj):
         try:
-            return OrderSerializer(Order.objects.get(table=obj)).data
+            return OrderSerializer(Order.objects.get(table__id=obj.id, play_status="active"), many=False).data
         except Exception as ex:
             return None
     
