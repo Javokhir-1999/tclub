@@ -521,12 +521,13 @@ class ProductSellListCreateAPIView(ListCreateAPIView):
             operator = CustomUser.objects.get(id=operator_id)
             if order_id:
                 order = Order.objects.get(id=int(order_id))
-                if not order:
-                    pay_status = False
-                else:
-                    pay_status = True
             else:
                 order = None
+
+            if order:
+                pay_status = True
+            else:
+                pay_status = False
     
             validated_products = []
             for p in products: 
