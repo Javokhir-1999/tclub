@@ -305,13 +305,13 @@ class ProductSellHistoryAPIView(APIView):
     pagination_class = ResultsSetPagination
     def get(self, request):
         product_id = self.request.GET.get('product_id', None)
+        operator_id = self.request.GET.get('operator_id', None)
         timeframe = self.request.GET.get('timeframe', None)
-        if product_id==None:
-            raise ValidationError({"product_id": "param: required", "timeframe": "param: not required", "page_size": "param: not required", })
+        if product_id==None and operator_id==None:
+            raise ValidationError({"product_id or operator_id": "param: required", "timeframe": "param: not required", "page_size": "param: not required", })
         
         query_filter: Q = Q()
         try:
-            product = ProductList.objects.get(id=product_id)
             if timeframe == None:
                 pass
             elif timeframe == 'day':
@@ -336,9 +336,13 @@ class ProductSellHistoryAPIView(APIView):
 
             else:
                 raise ValidationError(detail="not valid 'timeframe'")
+            if operator_id:
+                operator = CustomUser.objects.get(id=operator_id)
+                queryset = ProductSell.objects.filter(Q(operator=operator) & query_filter)
+            else:
+                product = ProductList.objects.get(id=product_id)
+                queryset = ProductSell.objects.filter(Q(product=product) & query_filter)
 
-            queryset = ProductSell.objects.filter(Q(product=product) & query_filter)
-            # queryset = ProductSell.objects.filter(Q(product=product) & query_filter).aggregate(total=Sum('count'))
             serializer = ProductSellSerializer(queryset, many=True)
         except Exception as ex:
             raise ValidationError(detail=ex)
@@ -429,7 +433,7 @@ class OrderCloseAPIView(APIView):
 
         try:    
             try:
-                order = Order.objects.get(id=order_id, pay_status=True)
+                order = Order.objects.get(Q(id=order_id) & Q(play_status="active") | Q(play_status="paused"))
             except:
                 raise ValidationError("order not found, wrong id or orderis already closed")
             total_play_price=0
@@ -481,7 +485,6 @@ class OrderCloseAPIView(APIView):
 
         except Exception as ex:
             raise ValidationError(ex)
-
 
 class ProductSellListCreateAPIView(ListCreateAPIView):
     queryset = ProductSell.objects.all()
@@ -614,3 +617,19 @@ class OrderListCreateAPIView(ListCreateAPIView):
         except Exception as ex:
             raise ValidationError(ex)
             
+class  OrderUpdateAPIView(UpdateAPIView):
+    queryset =  Order.objects.all()
+    serializer_class =  OrderSerializer
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+class OrderRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            data = self.perform_destroy(instance)
+            return Response('Deleted Successfully', status=201)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
