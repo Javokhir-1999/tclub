@@ -100,7 +100,7 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return self.uuid
+        return str(self.id)
 
 class ProductSell(models.Model):
     order = models.ForeignKey(Order, on_delete=models.PROTECT, null=True, blank=True)
