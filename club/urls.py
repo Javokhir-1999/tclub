@@ -21,6 +21,7 @@ urlpatterns = [
     path('product-list-update/<int:pk>', views.ProductListUpdateAPIView.as_view()),
     path('product-list/<int:pk>', views.ProductRetrieveDestroyView.as_view()),
     path('product-list/filter', views.ProductListFindView.as_view()),
+    path('product-list-admin/filter', views.ProductListAdminFindView.as_view()),
 
     path('table', views.TableListCreateAPIView.as_view()),
     path('table-update/<int:pk>', views.TableUpdateAPIView.as_view()),

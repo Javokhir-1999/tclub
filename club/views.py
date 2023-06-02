@@ -229,6 +229,15 @@ class ProductListFindView(ListAPIView):
         except Exception as ex:
             raise ValidationError()
 
+class ProductListAdminFindView(ListAPIView):
+    serializer_class = ProductListSerializer
+    def get_queryset(self):
+        filter = self.request.GET.get('filter', None)
+        try:
+            return ProductList.objects.filter(Q(barcode__contains=filter) | Q(name__contains=filter))
+        except Exception as ex:
+            raise ValidationError()
+
 class ClientListFindView(ListAPIView):
     serializer_class = ClientSerializer
     def get_queryset(self):
