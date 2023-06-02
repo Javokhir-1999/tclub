@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-a5e1h5st#k3$kcyaixga3h^z2xmrtm6!*!=+wk8j561_k(p5l=
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*', 'https://2395-213-230-114-224.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*', 'https://3590-213-230-114-224.ngrok-free.app']
 CORS_ALLOW_ALL_ORIGINS = True
 INSTALLED_APPS = [
     'django.contrib.admin',
