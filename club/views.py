@@ -362,7 +362,7 @@ class TableListCreateAPIView(ListCreateAPIView):
         filter = self.request.GET.get('filter', None)
         try:
             if filter:
-                queryset = Table.objects.filter(in_use=filter)
+                queryset = Table.objects.filter(in_use=filter, active=True)
             else:
                 queryset = self.get_queryset()
         except Exception as ex:

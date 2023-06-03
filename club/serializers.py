@@ -186,10 +186,11 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductSellSerializer(serializers.ModelSerializer):
-    product = ProductListSerializer()
+    # product = ProductListSerializer()
     class Meta:
         model = ProductSell
         fields = '__all__'
+        depth=2
 
 class ProductSellCUSerializer(serializers.ModelSerializer):
     class Meta:
