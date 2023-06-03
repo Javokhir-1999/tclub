@@ -164,7 +164,7 @@ class TableSerializer(serializers.ModelSerializer):
     def get_check_list(self, obj):
         try:
             total_price=0
-            order = Order.objects.get(table=obj)
+            order = Order.objects.get(table__id=obj.id, play_status="active")
             product_sell_list = ProductSell.objects.filter(order=order, pay_status=True)
             for product in product_sell_list:
                 total_price += product.price_sell * product.count
