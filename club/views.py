@@ -221,7 +221,11 @@ class ProductListFindView(ListAPIView):
         filter = self.request.GET.get('filter', None)
         try:
             result = []
-            pls =  ProductList.objects.filter(Q(barcode__contains=filter) | Q(name__contains=filter))
+            try:
+                pls =  ProductList.objects.filter(barcode__contains=filter)
+            except:
+                pls =  ProductList.objects.filter(name__contains=filter)
+                
             for p in pls:
                 if Stock.objects.filter(Q(barcode=p.barcode) & Q(total_left__gte=1)):
                     result.append(p)
