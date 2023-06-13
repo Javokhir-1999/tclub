@@ -11,7 +11,7 @@ from django.db.models import Sum
 from django.db.models import Q
 from datetime import date, datetime, timedelta, time
 date = date.today()
-from .models import (ProductType, ProductList, Shipper, 
+from .models import (ProductType, ProductList, Shipper, StoreGroup,
     Store, Payment, Client, CustomUser, Table, ProductSell, 
     ProductSellCheck, Stock, Discount, Order, OrderCheck, Barcode)
 from .serializers import (
@@ -165,55 +165,50 @@ class ShipperUpdateAPIView(UpdateAPIView):
 class AddToStoreAPIView(APIView):
     def post(self, request, format=None):
         data = request.data
-        product_id = data.get('product_id', None)
         shipper_id = data.get('shipper_id', None)
-        price_buy = data.get('price_buy', None)
-        count = data.get('count', None)
+        products = data.get('products', None)
         payment = data.get('payment', None)
 
 
-        if product_id == None or shipper_id == None or price_buy == None or count == None or payment== None:
+        if shipper_id == None or products == None or payment== None:
             raise ValidationError(detail={
-                "product_id": "required", 
+                "products": "required", 
                 "shipper_id": "required", 
-                "price_buy": "required", 
-                "count": "required",
                 "payment": "required"
             })
+
         try:
-            product = ProductList.objects.get(id=product_id)
+            group = StoreGroup.objects.create(payment=payment)
             shipper = Shipper.objects.get(id=shipper_id)
         except Exception as ex:
-            raise ValidationError(detail=ex)
+                raise ValidationError(detail=ex)
 
-        try:
-            product_add = Store.objects.create(
-                product=product,
-                barcode=product.barcode,
-                shipper=shipper,
-                price_buy=price_buy,
-                count=count
-            )
-            if payment:
-                Payment.objects.create(
-                    shipment=product_add,
-                    amount=payment 
+        for p in products:
+            try:
+                product = ProductList.objects.get(id=p['product_id'])
+                product_add = Store.objects.create(
+                    product=product,
+                    barcode=product.barcode,
+                    shipper=shipper,
+                    group=group,
+                    price_buy=p['price_buy'],
+                    count=p['count']
                 )
-        except Exception as ex:
-            raise ValidationError(ex)
+            except Exception as ex:
+                raise ValidationError(ex)
 
-        try:
-            in_store = Stock.objects.get(barcode=product_add.barcode)
-            in_store.total_left += product_add.count
-            in_store.save() 
-            # Because the super class save method doesn't return anything
-            stored_product = Stock.objects.get(barcode=product_add.barcode)
-        except Exception as ex:
-            stored_product = Stock.objects.create(
-                barcode=product_add.barcode,
-                total_left=product_add.count)
+            try:
+                in_store = Stock.objects.get(barcode=product_add.barcode)
+                in_store.total_left += product_add.count
+                in_store.save() 
+                # Because the super class save method doesn't return anything
+                stored_product = Stock.objects.get(barcode=product_add.barcode)
+            except Exception as ex:
+                stored_product = Stock.objects.create(
+                    barcode=product_add.barcode,
+                    total_left=product_add.count)
 
-        return Response({"product": StoreCSerializer(product_add, many=False).data, "total_left": stored_product.total_left})
+        return Response("Done!")
 
 class ProductListFindView(ListAPIView):
     serializer_class = ProductListSerializer

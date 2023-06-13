@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import Group as DjGroup
 
 from .models import (ProductType, ProductList, Shipper, 
-    Store, Payment, Client, CustomUser, Table, ProductSell, 
+    Store, StoreGroup, Client, CustomUser, Table, ProductSell, 
     ProductSellCheck, Stock, Discount, Order, OrderCheck, Barcode)
 
 admin.site.unregister(DjGroup)
@@ -15,7 +15,7 @@ class ProductListAdmin(admin.ModelAdmin):
 class ShipperAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'phone', 'created_at', 'updated_at')
 class StoreAdmin(admin.ModelAdmin):
-    list_display = ('id', 'product', 'shipper', 'barcode', 'price_buy', 'count', 'created_at', 'updated_at')
+    list_display = ('id', 'product', 'group', 'shipper', 'barcode', 'price_buy', 'count', 'created_at', 'updated_at')
 class ClientAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'photo', 'phone', 'created_at')
 class CustomUserAdmin(admin.ModelAdmin):
@@ -39,8 +39,8 @@ class OrderCheckAdmin(admin.ModelAdmin):
 class BarcodeAdmin(admin.ModelAdmin):
     list_display = ('id', 'created_at', 'updated_at')
 
-class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'shipment','created_at')
+class StoreGroupAdmin(admin.ModelAdmin):
+    list_display = ('id', 'payment','created_at')
 
 admin.site.register(ProductType, ProductTypeAdmin)
 admin.site.register(ProductList, ProductListAdmin)
@@ -56,4 +56,4 @@ admin.site.register(Discount, DiscountAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderCheck, OrderCheckAdmin)
 admin.site.register(Barcode, BarcodeAdmin)
-admin.site.register(Payment, PaymentAdmin)
+admin.site.register(StoreGroup, StoreGroupAdmin)

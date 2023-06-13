@@ -36,9 +36,16 @@ class Shipper(models.Model):
     def __str__(self):
         return self.name
 
+class StoreGroup(models.Model):
+    payment = models.PositiveBigIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return str(self.id)
+
 class Store(models.Model):
     product = models.ForeignKey(ProductList, on_delete=models.PROTECT)
     shipper = models.ForeignKey(Shipper, on_delete=models.PROTECT)
+    group = models.ForeignKey(StoreGroup, on_delete=models.PROTECT)
     barcode = models.PositiveBigIntegerField(null=False, unique=False)
     price_buy = models.PositiveBigIntegerField()
     count = models.IntegerField()

@@ -46,26 +46,13 @@ class ProductTypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductListSerializer(serializers.ModelSerializer):
-    # shipment = serializers.SerializerMethodField('get_shipment')
-    # sales = serializers.SerializerMethodField('get_sales')
     total_left = serializers.SerializerMethodField('get_total_left')
     class Meta:
         model = ProductList
         fields = '__all__'
         extra = ['sales', 'shipment']
         depth = 2
-    def get_shipment(self, obj):
-        total_price_buy=0
-        try:
-            shipments = Store.objects.filter(barcode=obj.barcode)
-            for shipment in shipments:
-                total_price_buy += shipment.price_buy*shipment.count
-            return {
-                "history": StoreSerializer(shipments, many=True).data,
-                "total_price_buy": total_price_buy
-            }
-        except Exception as ex:
-            raise ValidationError(ex)
+
     def get_total_left(self, obj):
         total_count=0
         try:
