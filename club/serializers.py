@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from .models import (ProductType, ProductList, Shipper, 
     Store, Client, CustomUser, Table, ProductSell, Payment, 
-    ProductSellCheck, Stock, Discount, Order, OrderCheck, Barcode)
+    ProductSellCheck, Stock, Discount, Order, OrderCheck, StoreGroup,Barcode)
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class CustomUserTokenSerializer(serializers.ModelSerializer):
@@ -91,37 +91,34 @@ class StockSerializer(serializers.ModelSerializer):
         model = Stock
         fields = '__all__'
 
+class ShipperSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Shipper
+        fields = '__all__'
+
+class ProductShipmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoreGroup
+        fields = '__all__'
+        
 class StoreSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(label='ID')
+    product = ProductListSerializer()
+    shipper = ShipperSerializer()
+    group = ProductShipmentSerializer()
     total_price = serializers.SerializerMethodField('get_total_price')
-    payment = serializers.SerializerMethodField('get_payment')
     class Meta:
         model = Store
         fields = '__all__'
-        extra = ['payment', 'total_price']
-        depth = 2
+        extra = ['total_price']
 
     def get_total_price(self, obj):
         return obj.count * obj.price_buy
 
-    def get_payment(self, obj):
-        total_pay = 0
-        try:
-            payment_list = Payment.objects.filter(shipment=obj.id).values_list('amount')
-            for amount in payment_list:
-                total_pay += amount[0]
-            return total_pay
-        except Exception as ex:
-            raise ValidationError(ex)
             
 class StoreCSerializer(serializers.ModelSerializer):
     class Meta:
         model = Store
-        fields = '__all__'
-
-class ShipperSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Shipper
         fields = '__all__'
 
 class BarcodeSerializer(serializers.ModelSerializer):
@@ -201,3 +198,5 @@ class OrderCUSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = '__all__'
+
+

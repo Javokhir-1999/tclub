@@ -31,6 +31,7 @@ from .serializers import (
     ShipperSerializer,
     OrderSerializer,
     OrderCUSerializer,
+    ProductShipmentSerializer,
     StockSerializer)
 
 class ResultsSetPagination(PageNumberPagination):
@@ -85,6 +86,40 @@ class ProductStoreListAPIView(ListAPIView):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
 
+class ProductStoreByGroupIDListAPIView(ListAPIView):
+    queryset = Store.objects.all()
+    serializer_class = StoreSerializer
+    def list(self, request):
+        shipment_id = self.request.GET.get('shipment_id', None)
+        if not shipment_id:
+            raise ValidationError("param 'shipment_id' is required")
+
+        queryset = Store.objects.filter(group_id = shipment_id)
+        try:
+            serializer = StoreSerializer(queryset, many=True)
+            return Response(serializer.data)
+        except Exception as err:
+            return Response(err)
+
+
+class ProductShipmentListAPIView(ListAPIView):
+    queryset = Store.objects.all()
+    serializer_class = ProductShipmentSerializer
+
+class ProductShipmentAPIView(APIView):
+    def get(self, request):
+        shipments = StoreGroup.objects.all()
+        result = []
+        for ship in shipments:
+            result.append({
+                "id": ship.id,
+                "payment": ship.payment,
+                "products": StoreSerializer(Store.objects.filter(group=ship), many=True).data
+            })
+
+        
+        return Response(result)
+    
 class ProductStoreRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
