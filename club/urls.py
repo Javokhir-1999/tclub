@@ -10,11 +10,12 @@ urlpatterns = [
 
     path('product-store', views.ProductStoreListAPIView.as_view()),
     path('product-store-shipment', views.ProductStoreByGroupIDListAPIView.as_view()),
-    path('poduct-store-history', views.ShipmentHistoryAPIView.as_view()),
+    path('product-store-history', views.StoreHistoryAPIView.as_view()),
     path('product-store-add', views.AddToStoreAPIView.as_view()),
     path('product-store/<int:pk>', views.ProductStoreRetrieveDestroyView.as_view()),
     
     path('shipment', views.ProductShipmentListAPIView.as_view()),
+    path('product-shipment-history', views.ShipmentHistoryAPIView.as_view()),
 
     path('product-type', views.ProductTypeListCreateView.as_view()),
     path('product-type-update/<int:pk>', views.ProductTypeUpdateAPIView.as_view()),

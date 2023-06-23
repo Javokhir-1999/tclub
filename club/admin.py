@@ -40,7 +40,7 @@ class BarcodeAdmin(admin.ModelAdmin):
     list_display = ('id', 'created_at', 'updated_at')
 
 class StoreGroupAdmin(admin.ModelAdmin):
-    list_display = ('id', 'payment','created_at')
+    list_display = ('id', 'payment', 'shipper', 'cost', 'created_at')
 
 admin.site.register(ProductType, ProductTypeAdmin)
 admin.site.register(ProductList, ProductListAdmin)

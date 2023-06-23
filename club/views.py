@@ -106,20 +106,6 @@ class ProductShipmentListAPIView(ListAPIView):
     queryset = StoreGroup.objects.all()
     serializer_class = ProductShipmentSerializer
 
-class ProductShipmentAPIView(APIView):
-    def get(self, request):
-        shipments = StoreGroup.objects.all()
-        result = []
-        for ship in shipments:
-            result.append({
-                "id": ship.id,
-                "payment": ship.payment,
-                "products": StoreSerializer(Store.objects.filter(group=ship), many=True).data
-            })
-
-        
-        return Response(result)
-    
 class ProductStoreRetrieveDestroyView(RetrieveAPIView, DestroyAPIView):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
@@ -213,8 +199,13 @@ class AddToStoreAPIView(APIView):
             })
 
         try:
-            group = StoreGroup.objects.create(payment=payment)
             shipper = Shipper.objects.get(id=shipper_id)
+            cost = 0
+            for p in products:
+                cost += p['price_buy'] * p['count']
+
+            group = StoreGroup.objects.create(payment=payment, shipper=shipper, cost=cost)
+
         except Exception as ex:
                 raise ValidationError(detail=ex)
 
@@ -231,15 +222,14 @@ class AddToStoreAPIView(APIView):
                 )
             except Exception as ex:
                 raise ValidationError(ex)
-
+                
             try:
                 in_store = Stock.objects.get(barcode=product_add.barcode)
                 in_store.total_left += product_add.count
                 in_store.save() 
-                # Because the super class save method doesn't return anything
-                stored_product = Stock.objects.get(barcode=product_add.barcode)
+                Stock.objects.get(barcode=product_add.barcode)
             except Exception as ex:
-                stored_product = Stock.objects.create(
+                Stock.objects.create(
                     barcode=product_add.barcode,
                     total_left=product_add.count)
 
@@ -290,7 +280,7 @@ class GenBarcodeView(APIView):
 
         return Response({"barcode":barcode})
 
-class ShipmentHistoryAPIView(APIView):
+class StoreHistoryAPIView(APIView):
     def get(self, request):
         product_id = self.request.GET.get('product_id', None)
         shipper_id = self.request.GET.get('shipper_id', None)
@@ -333,6 +323,51 @@ class ShipmentHistoryAPIView(APIView):
                 queryset = Store.objects.filter(Q(shipper=shipper) & query_filter)
 
             serializer = StoreSerializer(queryset, many=True)
+        except Exception as ex:
+            raise ValidationError(detail=ex)
+
+        return Response(serializer.data)
+
+class ShipmentHistoryAPIView(APIView):
+    def get(self, request):
+        shipper_id = self.request.GET.get('shipper_id', None)
+        timeframe = self.request.GET.get('timeframe', None)
+        if shipper_id==None:
+            raise ValidationError({"shipper_id": "param: required", "timeframe": "param: not required", "page_size": "param: not required", })
+        
+        query_filter: Q = Q()
+        try:
+            
+            if timeframe == None:
+                pass
+            elif timeframe == 'day':
+                today_time_min = datetime.combine(date, time.min)
+                today_time_max = datetime.now()
+                query_filter = query_filter & Q(created_at__range=(today_time_min, today_time_max))
+
+            elif timeframe == 'week':
+                start_week = datetime.now() - timedelta(weeks=1)
+                end_week = datetime.now()
+                query_filter = query_filter & Q(created_at__range=(start_week, end_week))
+
+            elif timeframe == 'month':
+                start_month = datetime.now() - timedelta(weeks=4)
+                end_month = datetime.now()
+                query_filter = query_filter & Q(created_at__range=(start_month, end_month))
+
+            elif timeframe == 'year':
+                start_year = datetime.now() - timedelta(days=365)
+                end_year = datetime.now()
+                query_filter = query_filter & Q(created_at__range=(start_year, end_year))
+
+            else:
+                raise ValidationError(detail="not valid 'timeframe'")
+
+            if shipper_id:
+                shipper = Shipper.objects.get(id=shipper_id)
+                queryset = StoreGroup.objects.filter(Q(shipper=shipper) & query_filter)
+
+            serializer = ProductShipmentSerializer(queryset, many=True)
         except Exception as ex:
             raise ValidationError(detail=ex)
 

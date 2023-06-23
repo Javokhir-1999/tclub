@@ -38,6 +38,8 @@ class Shipper(models.Model):
 
 class StoreGroup(models.Model):
     payment = models.PositiveBigIntegerField()
+    shipper = models.ForeignKey(Shipper, on_delete=models.PROTECT)
+    cost = models.PositiveBigIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return str(self.id)
