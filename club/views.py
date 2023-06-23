@@ -103,7 +103,7 @@ class ProductStoreByGroupIDListAPIView(ListAPIView):
 
 
 class ProductShipmentListAPIView(ListAPIView):
-    queryset = Store.objects.all()
+    queryset = StoreGroup.objects.all()
     serializer_class = ProductShipmentSerializer
 
 class ProductShipmentAPIView(APIView):
