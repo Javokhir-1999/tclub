@@ -97,6 +97,7 @@ class ShipperSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductShipmentSerializer(serializers.ModelSerializer):
+    shipper = ShipperSerializer()
     class Meta:
         model = StoreGroup
         fields = '__all__'

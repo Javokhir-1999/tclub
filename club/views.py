@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from django.core.paginator import Paginator
 from django.contrib.auth import authenticate
 from django.db.models import Sum
 from django.db.models import Q
@@ -370,8 +371,20 @@ class ShipmentHistoryAPIView(APIView):
             serializer = ProductShipmentSerializer(queryset, many=True)
         except Exception as ex:
             raise ValidationError(detail=ex)
+        
+        try:
+            page_number = self.request.query_params.get('page', 1)
+            page_size = self.request.query_params.get('page_size', 10)
+            paginator = Paginator(serializer.data, page_size)
 
-        return Response(serializer.data)
+            return Response({
+                'count': paginator.count,
+                'history': paginator.page(page_number).object_list,
+            })
+        except Exception as err:
+            raise ValidationError(err)
+
+        # return Response(serializer.data)
 
 class ProductSellHistoryAPIView(APIView):
     def get(self, request):
